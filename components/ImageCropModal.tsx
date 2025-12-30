@@ -71,6 +71,53 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({ isOpen, src, title, onC
     setOffset((prev) => clampOffset(prev));
   }, [natural, zoom, clampOffset]);
 
+  useEffect(() => {
+    if (!isOpen || !natural) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const step = e.shiftKey ? 24 : 10;
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setOffset((prev) => clampOffset({ x: prev.x - step, y: prev.y }));
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setOffset((prev) => clampOffset({ x: prev.x + step, y: prev.y }));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setOffset((prev) => clampOffset({ x: prev.x, y: prev.y - step }));
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setOffset((prev) => clampOffset({ x: prev.x, y: prev.y + step }));
+        return;
+      }
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        setZoom((z) => clamp(Math.round((z + ZOOM_STEP) * 100) / 100, MIN_ZOOM, MAX_ZOOM));
+        return;
+      }
+      if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        setZoom((z) => clamp(Math.round((z - ZOOM_STEP) * 100) / 100, MIN_ZOOM, MAX_ZOOM));
+        return;
+      }
+      if (e.key === '0') {
+        e.preventDefault();
+        setZoom(1);
+        setOffset({ x: 0, y: 0 });
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown, { passive: false });
+    return () => window.removeEventListener('keydown', onKeyDown as any);
+  }, [clampOffset, isOpen, natural]);
+
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!natural) return;
     const target = e.currentTarget;
@@ -171,13 +218,17 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({ isOpen, src, title, onC
             <div className="p-6 space-y-5">
               <div className="flex items-start justify-center">
                 <div
-                  className="relative bg-gray-100 border border-gray-200 rounded-3xl overflow-hidden"
+                  className="relative bg-gray-100 border border-gray-200 rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing"
                   style={{ width: CROP_SIZE, height: CROP_SIZE, touchAction: 'none' }}
                   onPointerDown={onPointerDown}
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
                   onPointerCancel={onPointerUp}
                   onWheel={handleWheel}
+                  onDoubleClick={() => {
+                    setZoom(1);
+                    setOffset({ x: 0, y: 0 });
+                  }}
                 >
                   {loadError ? (
                     <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-red-700">
@@ -238,6 +289,9 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({ isOpen, src, title, onC
                     <Plus size={16} />
                   </button>
                 </div>
+                <p className="text-[11px] text-gray-400">
+                  Tip: drag to move · double-click to reset · arrows to nudge (Shift for faster)
+                </p>
               </div>
             </div>
 
@@ -266,4 +320,3 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({ isOpen, src, title, onC
 };
 
 export default ImageCropModal;
-
