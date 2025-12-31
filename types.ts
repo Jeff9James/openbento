@@ -3,6 +3,7 @@ export enum BlockType {
   TEXT = 'TEXT',
   IMAGE = 'IMAGE',
   SOCIAL = 'SOCIAL',
+  SOCIAL_ICON = 'SOCIAL_ICON', // Small icon-only social block for 9x9 grid
   MAP = 'MAP',
   SPACER = 'SPACER'
 }
@@ -30,7 +31,18 @@ export type SocialPlatform =
   | 'kofi'
   | 'buymeacoffee'
   | 'website'
+  | 'snapchat'
+  | 'discord'
+  | 'telegram'
+  | 'whatsapp'
   | 'custom';
+
+// Configured social account in settings
+export interface SocialAccount {
+  platform: SocialPlatform;
+  handle: string; // Username/handle without @ or full URL for url-type platforms
+  followerCount?: number; // Optional follower/subscriber count
+}
 
 export interface BlockData {
   id: string;
@@ -60,19 +72,36 @@ export interface BlockData {
   // Social platform (non-YouTube mode)
   socialPlatform?: SocialPlatform;
   socialHandle?: string; // Stored without leading '@' when possible
+
+  // Z-index for overlapping blocks (runtime only, not saved)
+  zIndex?: number;
+}
+
+// Profile picture style options
+export interface AvatarStyle {
+  shape: 'circle' | 'square' | 'rounded'; // circle, square, or rounded corners
+  shadow: boolean; // drop shadow
+  border: boolean; // show border/contour
+  borderColor?: string; // border color (default: white)
+  borderWidth?: number; // border width in pixels (default: 3)
 }
 
 export interface UserProfile {
   name: string;
   bio: string;
   avatarUrl: string;
+  avatarStyle?: AvatarStyle; // Profile picture style options
   theme: 'light' | 'dark';
   primaryColor: string;
   showBranding?: boolean;
+  showSocialInHeader?: boolean; // Show social icons row under name/bio
+  showFollowerCount?: boolean; // Show follower count next to social icons
   analytics?: {
     enabled?: boolean;
     supabaseUrl?: string; // https://<project-ref>.supabase.co
   };
+  // Centralized social accounts configuration
+  socialAccounts?: SocialAccount[];
 }
 
 export interface SiteData {

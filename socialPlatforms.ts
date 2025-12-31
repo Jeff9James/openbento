@@ -2,11 +2,13 @@ import type { LucideIcon } from 'lucide-react';
 import {
   AtSign,
   BookText,
+  Camera,
   Cloud,
   Code,
   Coffee,
   Dribbble,
   Facebook,
+  Gamepad2,
   Github,
   Gitlab,
   Globe,
@@ -15,13 +17,45 @@ import {
   Linkedin,
   MessageCircle,
   Newspaper,
+  Phone,
   Pin,
   Rss,
+  Send,
   Twitch,
   Video,
   X,
   Youtube,
 } from 'lucide-react';
+
+// Simple Icons (brand icons with official colors)
+import {
+  SiX,
+  SiInstagram,
+  SiTiktok,
+  SiYoutube,
+  SiGithub,
+  SiGitlab,
+  SiLinkedin,
+  SiFacebook,
+  SiTwitch,
+  SiDribbble,
+  SiMedium,
+  SiDevdotto,
+  SiReddit,
+  SiPinterest,
+  SiThreads,
+  SiBluesky,
+  SiMastodon,
+  SiSubstack,
+  SiPatreon,
+  SiKofi,
+  SiBuymeacoffee,
+  SiSnapchat,
+  SiDiscord,
+  SiTelegram,
+  SiWhatsapp,
+} from 'react-icons/si';
+import type { IconType } from 'react-icons';
 
 import type { SocialPlatform } from './types';
 
@@ -29,6 +63,8 @@ export type SocialPlatformOption = {
   id: SocialPlatform;
   label: string;
   icon: LucideIcon;
+  brandIcon?: IconType; // Colored brand icon from Simple Icons
+  brandColor?: string; // Official brand color
   placeholder: string;
   kind: 'handle' | 'url';
   buildUrl: (input: string) => string;
@@ -49,6 +85,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'x',
     label: 'X',
     icon: X,
+    brandIcon: SiX,
+    brandColor: '#000000',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://x.com/${encodeURIComponent(normalizeHandle(input))}`,
@@ -58,6 +96,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'instagram',
     label: 'Instagram',
     icon: Instagram,
+    brandIcon: SiInstagram,
+    brandColor: '#E4405F',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://www.instagram.com/${encodeURIComponent(normalizeHandle(input))}/`,
@@ -67,6 +107,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'tiktok',
     label: 'TikTok',
     icon: Video,
+    brandIcon: SiTiktok,
+    brandColor: '#000000',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://www.tiktok.com/@${encodeURIComponent(normalizeHandle(input))}`,
@@ -76,6 +118,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'youtube',
     label: 'YouTube',
     icon: Youtube,
+    brandIcon: SiYoutube,
+    brandColor: '#FF0000',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://www.youtube.com/@${encodeURIComponent(normalizeHandle(input))}`,
@@ -85,6 +129,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'github',
     label: 'GitHub',
     icon: Github,
+    brandIcon: SiGithub,
+    brandColor: '#181717',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://github.com/${encodeURIComponent(normalizeHandle(input))}`,
@@ -94,6 +140,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'gitlab',
     label: 'GitLab',
     icon: Gitlab,
+    brandIcon: SiGitlab,
+    brandColor: '#FC6D26',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://gitlab.com/${encodeURIComponent(normalizeHandle(input))}`,
@@ -103,6 +151,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'linkedin',
     label: 'LinkedIn',
     icon: Linkedin,
+    brandIcon: SiLinkedin,
+    brandColor: '#0A66C2',
     placeholder: 'your-handle',
     kind: 'handle',
     buildUrl: (input) => `https://www.linkedin.com/in/${encodeURIComponent(normalizeHandle(input))}/`,
@@ -112,6 +162,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'facebook',
     label: 'Facebook',
     icon: Facebook,
+    brandIcon: SiFacebook,
+    brandColor: '#1877F2',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://www.facebook.com/${encodeURIComponent(normalizeHandle(input))}`,
@@ -121,6 +173,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'twitch',
     label: 'Twitch',
     icon: Twitch,
+    brandIcon: SiTwitch,
+    brandColor: '#9146FF',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://www.twitch.tv/${encodeURIComponent(normalizeHandle(input))}`,
@@ -130,6 +184,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'dribbble',
     label: 'Dribbble',
     icon: Dribbble,
+    brandIcon: SiDribbble,
+    brandColor: '#EA4C89',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://dribbble.com/${encodeURIComponent(normalizeHandle(input))}`,
@@ -139,6 +195,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'medium',
     label: 'Medium',
     icon: Newspaper,
+    brandIcon: SiMedium,
+    brandColor: '#000000',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://medium.com/@${encodeURIComponent(normalizeHandle(input))}`,
@@ -148,6 +206,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'devto',
     label: 'Dev.to',
     icon: Code,
+    brandIcon: SiDevdotto,
+    brandColor: '#0A0A0A',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://dev.to/${encodeURIComponent(normalizeHandle(input))}`,
@@ -157,6 +217,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'reddit',
     label: 'Reddit',
     icon: MessageCircle,
+    brandIcon: SiReddit,
+    brandColor: '#FF4500',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://www.reddit.com/user/${encodeURIComponent(normalizeHandle(input))}/`,
@@ -166,6 +228,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'pinterest',
     label: 'Pinterest',
     icon: Pin,
+    brandIcon: SiPinterest,
+    brandColor: '#BD081C',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://www.pinterest.com/${encodeURIComponent(normalizeHandle(input))}/`,
@@ -175,6 +239,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'threads',
     label: 'Threads',
     icon: AtSign,
+    brandIcon: SiThreads,
+    brandColor: '#000000',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://www.threads.net/@${encodeURIComponent(normalizeHandle(input))}`,
@@ -184,6 +250,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'bluesky',
     label: 'Bluesky',
     icon: Cloud,
+    brandIcon: SiBluesky,
+    brandColor: '#0085FF',
     placeholder: 'name.bsky.social',
     kind: 'handle',
     buildUrl: (input) => `https://bsky.app/profile/${encodeURIComponent(normalizeHandle(input))}`,
@@ -193,6 +261,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'mastodon',
     label: 'Mastodon',
     icon: Rss,
+    brandIcon: SiMastodon,
+    brandColor: '#6364FF',
     placeholder: '@user@instance.tld',
     kind: 'handle',
     buildUrl: (input) => {
@@ -213,6 +283,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'substack',
     label: 'Substack',
     icon: BookText,
+    brandIcon: SiSubstack,
+    brandColor: '#FF6719',
     placeholder: 'newsletter',
     kind: 'handle',
     buildUrl: (input) => {
@@ -229,6 +301,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'patreon',
     label: 'Patreon',
     icon: AtSign,
+    brandIcon: SiPatreon,
+    brandColor: '#FF424D',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://patreon.com/${encodeURIComponent(normalizeHandle(input))}`,
@@ -238,6 +312,8 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'kofi',
     label: 'Ko-fi',
     icon: Coffee,
+    brandIcon: SiKofi,
+    brandColor: '#FF5E5B',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://ko-fi.com/${encodeURIComponent(normalizeHandle(input))}`,
@@ -247,9 +323,55 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     id: 'buymeacoffee',
     label: 'Buy Me a Coffee',
     icon: Coffee,
+    brandIcon: SiBuymeacoffee,
+    brandColor: '#FFDD00',
     placeholder: 'yourhandle',
     kind: 'handle',
     buildUrl: (input) => `https://www.buymeacoffee.com/${encodeURIComponent(normalizeHandle(input))}`,
+    formatHandleForDisplay: (h) => normalizeHandle(h),
+  },
+  {
+    id: 'snapchat',
+    label: 'Snapchat',
+    icon: Camera,
+    brandIcon: SiSnapchat,
+    brandColor: '#FFFC00',
+    placeholder: 'yourhandle',
+    kind: 'handle',
+    buildUrl: (input) => `https://www.snapchat.com/add/${encodeURIComponent(normalizeHandle(input))}`,
+    formatHandleForDisplay: (h) => normalizeHandle(h),
+  },
+  {
+    id: 'discord',
+    label: 'Discord',
+    icon: Gamepad2,
+    brandIcon: SiDiscord,
+    brandColor: '#5865F2',
+    placeholder: 'server-invite-code',
+    kind: 'handle',
+    buildUrl: (input) => `https://discord.gg/${encodeURIComponent(normalizeHandle(input))}`,
+    formatHandleForDisplay: (h) => normalizeHandle(h),
+  },
+  {
+    id: 'telegram',
+    label: 'Telegram',
+    icon: Send,
+    brandIcon: SiTelegram,
+    brandColor: '#26A5E4',
+    placeholder: 'yourhandle',
+    kind: 'handle',
+    buildUrl: (input) => `https://t.me/${encodeURIComponent(normalizeHandle(input))}`,
+    formatHandleForDisplay: (h) => `@${normalizeHandle(h)}`,
+  },
+  {
+    id: 'whatsapp',
+    label: 'WhatsApp',
+    icon: Phone,
+    brandIcon: SiWhatsapp,
+    brandColor: '#25D366',
+    placeholder: '+33612345678',
+    kind: 'handle',
+    buildUrl: (input) => `https://wa.me/${encodeURIComponent(normalizeHandle(input).replace(/[^0-9+]/g, ''))}`,
     formatHandleForDisplay: (h) => normalizeHandle(h),
   },
   {
@@ -300,6 +422,10 @@ export const inferSocialPlatformFromUrl = (url: string | undefined): SocialPlatf
   if (value.includes('patreon.com/')) return 'patreon';
   if (value.includes('ko-fi.com/')) return 'kofi';
   if (value.includes('buymeacoffee.com/')) return 'buymeacoffee';
+  if (value.includes('snapchat.com/')) return 'snapchat';
+  if (value.includes('discord.gg/') || value.includes('discord.com/')) return 'discord';
+  if (value.includes('t.me/') || value.includes('telegram.')) return 'telegram';
+  if (value.includes('wa.me/') || value.includes('whatsapp.com/')) return 'whatsapp';
   return undefined;
 };
 
@@ -352,6 +478,15 @@ export const extractHandleFromUrl = (
         // Prefer @user@instance from hostname + path
         if (segments[0]?.startsWith('@')) return `${segments[0].slice(1)}@${parsed.hostname}`;
         return undefined;
+      case 'snapchat':
+        if (segments[0] === 'add' && segments[1]) return segments[1];
+        return segments[0];
+      case 'discord':
+        return segments[0]; // invite code
+      case 'telegram':
+        return segments[0];
+      case 'whatsapp':
+        return segments[0]; // phone number
       case 'website':
       case 'custom':
         return url;
@@ -388,4 +523,16 @@ export const normalizeSocialHandle = (platform: SocialPlatform | undefined, inpu
   if (platform === 'mastodon') return input.trim().replace(/^@+/, '');
   if (platform === 'custom' || platform === 'website') return input.trim();
   return normalizeHandle(input);
+};
+
+// Format follower count: 220430 → "220k", 1500000 → "1.5M"
+export const formatFollowerCount = (count: number | undefined): string => {
+  if (count === undefined || count === null) return '';
+  if (count < 1000) return String(count);
+  if (count < 1000000) {
+    const k = count / 1000;
+    return k >= 100 ? `${Math.round(k)}k` : `${k.toFixed(k % 1 === 0 ? 0 : 1)}k`;
+  }
+  const m = count / 1000000;
+  return m >= 100 ? `${Math.round(m)}M` : `${m.toFixed(m % 1 === 0 ? 0 : 1)}M`;
 };

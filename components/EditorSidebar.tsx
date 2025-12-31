@@ -15,6 +15,7 @@ import {
 interface EditorSidebarProps {
   profile: UserProfile;
   addBlock: (type: BlockType) => void;
+  addSocialIconBlock: (platform: string, handle: string) => void;
   editingBlock: BlockData | null;
   updateBlock: (b: BlockData) => void;
   onDelete: (id: string) => void;
@@ -25,6 +26,7 @@ interface EditorSidebarProps {
 const EditorSidebar: React.FC<EditorSidebarProps> = ({
   profile,
   addBlock,
+  addSocialIconBlock,
   editingBlock,
   updateBlock,
   onDelete,
@@ -256,8 +258,8 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
             {/* Input Group */}
             <div className="space-y-5">
                 
-                {/* 1. Title (Not for spacers) */}
-                {editingBlock.type !== BlockType.SPACER && (
+                {/* 1. Title (Not for spacers or social icons) */}
+                {editingBlock.type !== BlockType.SPACER && editingBlock.type !== BlockType.SOCIAL_ICON && (
                   <div>
                       <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Title</label>
                       <input 
@@ -270,7 +272,109 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                   </div>
                 )}
 
-	                {/* 2. SOCIAL BLOCK: Mode + Platform */}
+                {/* 2a. SOCIAL_ICON BLOCK: Simple platform + handle */}
+                {editingBlock.type === BlockType.SOCIAL_ICON && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Platform</label>
+                      <div className="grid grid-cols-4 gap-1.5 max-h-40 overflow-y-auto">
+                        {SOCIAL_PLATFORM_OPTIONS.map((platform) => {
+                          const active = platform.id === editingBlock.socialPlatform;
+                          const BrandIcon = platform.brandIcon;
+                          const FallbackIcon = platform.icon;
+                          return (
+                            <button
+                              key={platform.id}
+                              type="button"
+                              onClick={() => updateBlock({ ...editingBlock, socialPlatform: platform.id })}
+                              className={`p-1.5 rounded-lg border transition-all flex flex-col items-center gap-0.5 ${active ? 'bg-violet-600 text-white border-violet-600 shadow-sm' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                              title={platform.label}
+                            >
+                              {BrandIcon ? (
+                                <BrandIcon size={14} style={{ color: active ? '#ffffff' : platform.brandColor }} />
+                              ) : (
+                                <FallbackIcon size={14} className={active ? 'text-white' : 'text-gray-500'} />
+                              )}
+                              <span className="text-[8px] font-medium leading-tight truncate w-full text-center">{platform.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                        {getSocialPlatformOption(editingBlock.socialPlatform)?.kind === 'url' ? 'URL' : 'Handle'}
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 focus:outline-none transition-all font-medium text-gray-600"
+                        value={editingBlock.socialHandle || ''}
+                        onChange={(e) => updateBlock({ ...editingBlock, socialHandle: e.target.value })}
+                        placeholder={getSocialPlatformOption(editingBlock.socialPlatform)?.placeholder ?? 'yourhandle'}
+                      />
+                    </div>
+
+                    {/* Icon Color Style */}
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Icon Style</label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => updateBlock({ ...editingBlock, textColor: 'text-brand' })}
+                          className={`flex-1 py-2 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+                            !editingBlock.textColor || editingBlock.textColor === 'text-brand'
+                              ? 'bg-violet-600 text-white border-violet-600'
+                              : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="w-3 h-3 rounded-full" style={{ background: getSocialPlatformOption(editingBlock.socialPlatform)?.brandColor || '#6366f1' }} />
+                          Color
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateBlock({ ...editingBlock, textColor: 'text-gray-700' })}
+                          className={`flex-1 py-2 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+                            editingBlock.textColor === 'text-gray-700'
+                              ? 'bg-gray-800 text-white border-gray-800'
+                              : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="w-3 h-3 rounded-full bg-gray-500" />
+                          Grey
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateBlock({ ...editingBlock, textColor: 'text-black' })}
+                          className={`flex-1 py-2 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+                            editingBlock.textColor === 'text-black'
+                              ? 'bg-black text-white border-black'
+                              : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="w-3 h-3 rounded-full bg-black" />
+                          Black
+                        </button>
+                      </div>
+                    </div>
+
+                    {editingBlock.socialHandle && buildSocialUrl(editingBlock.socialPlatform, editingBlock.socialHandle) && (
+                      <div className="bg-violet-50 border border-violet-200 rounded-lg p-2">
+                        <p className="text-[9px] font-bold text-violet-400 uppercase tracking-wider mb-0.5">Preview</p>
+                        <a
+                          href={buildSocialUrl(editingBlock.socialPlatform, editingBlock.socialHandle)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] font-medium text-violet-700 hover:text-violet-900 break-all underline"
+                        >
+                          {buildSocialUrl(editingBlock.socialPlatform, editingBlock.socialHandle)}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+	                {/* 2b. SOCIAL BLOCK: Mode + Platform */}
 	                {editingBlock.type === BlockType.SOCIAL && (
 	                  <div className="space-y-4">
 	                    <div className="p-1 bg-gray-100 rounded-xl flex">
@@ -436,19 +540,22 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                          )}
 
                         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                            {editingBlock.type === BlockType.IMAGE ? 'Or Image URL' : 
+                            {editingBlock.type === BlockType.IMAGE ? 'Image URL / Path' :
                             editingBlock.type === BlockType.MAP ? 'Address / City' : 'Destination URL'}
                         </label>
-                        <input 
-                            type="text" 
-                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-medium text-gray-600"
+                        <input
+                            type="text"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-mono text-xs text-gray-600"
                             value={editingBlock.type === BlockType.IMAGE ? (editingBlock.imageUrl || '') : (editingBlock.content || '')}
                             onChange={(e) => {
                                 if (editingBlock.type === BlockType.IMAGE) updateBlock({...editingBlock, imageUrl: e.target.value});
                                 else updateBlock({...editingBlock, content: e.target.value});
                             }}
-                            placeholder="https://..."
+                            placeholder={editingBlock.type === BlockType.IMAGE ? '/images/photo.jpg or https://...' : 'https://...'}
                         />
+                        {editingBlock.type === BlockType.IMAGE && (
+                            <p className="text-[10px] text-gray-400 mt-1.5">Use a URL/path instead of upload to avoid base64 in JSON</p>
+                        )}
                     </div>
                 )}
 
@@ -552,6 +659,41 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
 	                ))}
 	              </div>
 	            </section>
+
+                {/* Social Icons - from configured accounts */}
+                {profile.socialAccounts && profile.socialAccounts.length > 0 && (
+                  <section className="space-y-5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-5 bg-violet-600 rounded-full"></div>
+                      <h3 className="text-base font-bold text-gray-900">Social Icons</h3>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Add small social icons from your configured accounts.
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {profile.socialAccounts.map((account) => {
+                        const option = getSocialPlatformOption(account.platform);
+                        if (!option) return null;
+                        const Icon = option.icon;
+                        return (
+                          <button
+                            key={account.platform}
+                            onClick={() => addSocialIconBlock(account.platform, account.handle)}
+                            className="flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-100 rounded-xl hover:border-violet-300 hover:bg-violet-50 hover:shadow-md transition-all group"
+                            title={`Add ${option.label} icon`}
+                          >
+                            <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-violet-100 flex items-center justify-center text-gray-600 group-hover:text-violet-600 transition-colors">
+                              <Icon size={16} />
+                            </div>
+                            <span className="text-[10px] font-medium text-gray-500 group-hover:text-violet-600 truncate max-w-full">
+                              {option.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                )}
 	          </div>
 	        )}
 	      </div>

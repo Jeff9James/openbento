@@ -1,23 +1,68 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { SiteData, UserProfile, BlockData, BlockType, SavedBento } from '../types';
+import { SiteData, UserProfile, BlockData, BlockType, SavedBento, AvatarStyle } from '../types';
 import Block from './Block';
 import EditorSidebar from './EditorSidebar';
 import ProfileDropdown from './ProfileDropdown';
 import SettingsModal from './SettingsModal';
+import ImageCropModal from './ImageCropModal';
+import AvatarStyleModal from './AvatarStyleModal';
 import { exportSite, type ExportDeploymentTarget } from '../services/exportService';
-import { getOrCreateActiveBento, updateBentoData, setActiveBentoId, getBento } from '../services/storageService';
-import { Download, Layout, Share2, X, Check, Plus, Eye, Smartphone, Monitor, Home, Globe, BarChart3, RefreshCw, AlertTriangle, Settings } from 'lucide-react';
+import { initializeApp, updateBentoData, setActiveBentoId, getBento, downloadBentoJSON, loadBentoFromFile, renameBento } from '../services/storageService';
+import { getSocialPlatformOption, buildSocialUrl, formatFollowerCount } from '../socialPlatforms';
+import { Download, Layout, Share2, X, Check, Plus, Eye, Smartphone, Monitor, Home, Globe, BarChart3, RefreshCw, AlertTriangle, Settings, Upload, FileDown, Camera, Pencil, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface BuilderProps {
   onBack?: () => void;
 }
 
-const GRID_COLS = 3;
+const GRID_COLS = 9; // 9 columns for finer control (allows small social icons)
 const GRID_MAX_SEARCH_ROWS = 200;
-const MAX_ROW_SPAN = 8;
+const MAX_ROW_SPAN = 50; // Allow tall blocks for scrollable content
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+// Migrate blocks from old 3-col grid to new 9-col grid
+// Old blocks had colSpan 1-3, new blocks use colSpan 1-9
+// Regular blocks (not SOCIAL_ICON) should take 3x3 cells minimum
+const migrateBlocksToNewGrid = (blocks: BlockData[]): BlockData[] => {
+  const needsMigration = blocks.some(b => {
+    // SOCIAL_ICON and SPACER with 9 cols are already new format
+    if (b.type === BlockType.SOCIAL_ICON) return false;
+    if (b.type === BlockType.SPACER && b.colSpan === 9) return false;
+    // If colSpan is 1, 2, or 3 for a regular block, it's old format
+    // New format regular blocks have colSpan of 3, 6, or 9
+    return b.colSpan <= 3 && b.rowSpan <= 3;
+  });
+
+  if (!needsMigration) return blocks;
+
+  return blocks.map(block => {
+    // Skip new-format blocks
+    if (block.type === BlockType.SOCIAL_ICON) return block;
+    if (block.type === BlockType.SPACER && block.colSpan === 9) return block;
+
+    // Migrate old format: multiply dimensions by 3
+    const newColSpan = Math.min(block.colSpan * 3, 9);
+    const newRowSpan = Math.min(block.rowSpan * 3, MAX_ROW_SPAN);
+
+    // Migrate positions: multiply by 3 and adjust for 1-based indexing
+    const newGridColumn = block.gridColumn !== undefined
+      ? (block.gridColumn - 1) * 3 + 1
+      : undefined;
+    const newGridRow = block.gridRow !== undefined
+      ? (block.gridRow - 1) * 3 + 1
+      : undefined;
+
+    return {
+      ...block,
+      colSpan: newColSpan,
+      rowSpan: newRowSpan,
+      gridColumn: newGridColumn,
+      gridRow: newGridRow,
+    };
+  });
+};
 
 const blocksOverlap = (a: BlockData, b: BlockData) => {
   if (a.gridColumn === undefined || a.gridRow === undefined || b.gridColumn === undefined || b.gridRow === undefined) return false;
@@ -161,27 +206,18 @@ const ensureBlocksHavePositions = (blocks: BlockData[]) => {
 };
 
 const resizeBlockAndResolve = (blocks: BlockData[], blockId: string, requestedColSpan: number, requestedRowSpan: number) => {
-  const positioned = ensureBlocksHavePositions(blocks);
-  const target = positioned.find((b) => b.id === blockId);
-  if (!target || target.gridColumn === undefined || target.gridRow === undefined) return positioned;
+  const target = blocks.find((b) => b.id === blockId);
+  if (!target || target.gridColumn === undefined || target.gridRow === undefined) return blocks;
 
-  const colSpan = clamp(requestedColSpan, 1, GRID_COLS - target.gridColumn + 1);
+  // Clamp to grid bounds (9 cols, unlimited rows)
+  const colSpan = clamp(requestedColSpan, 1, Math.min(GRID_COLS - target.gridColumn + 1, GRID_COLS));
   const rowSpan = clamp(requestedRowSpan, 1, MAX_ROW_SPAN);
 
-  if (colSpan === target.colSpan && rowSpan === target.rowSpan) return positioned;
+  if (colSpan === target.colSpan && rowSpan === target.rowSpan) return blocks;
 
   const resized = { ...target, colSpan, rowSpan };
-  let nextBlocks = positioned.map((b) => (b.id === blockId ? resized : b));
-
-  const conflicting = nextBlocks.filter((b) => b.id !== blockId && blocksOverlap(resized, b));
-  if (conflicting.length === 0) return nextBlocks;
-
-  for (const conflict of conflicting) {
-    const occupied = getOccupiedCells(nextBlocks, [conflict.id]);
-    const startRow = conflict.gridRow ?? resized.gridRow ?? 1;
-    const newPos = findNextAvailablePosition(conflict, occupied, startRow);
-    nextBlocks = nextBlocks.map((b) => (b.id === conflict.id ? { ...b, gridColumn: newPos.col, gridRow: newPos.row } : b));
-  }
+  // Move resized block to end of array (appears on top)
+  const nextBlocks = [...blocks.filter((b) => b.id !== blockId), resized];
 
   return nextBlocks;
 };
@@ -196,6 +232,9 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const [showDeployModal, setShowDeployModal] = useState(false);
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showAvatarCropModal, setShowAvatarCropModal] = useState(false);
+  const [showAvatarStyleModal, setShowAvatarStyleModal] = useState(false);
+  const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -246,10 +285,12 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const [dragOverBlockId, setDragOverBlockId] = useState<string | null>(null);
   const [dragOverSlotIndex, setDragOverSlotIndex] = useState<number | null>(null);
   const [resizingBlockId, setResizingBlockId] = useState<string | null>(null);
+  const [extraRows, setExtraRows] = useState(0); // Extra rows added by user
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
 
-  // Auto-save debounce ref
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const gridRef = useRef<HTMLElement | null>(null);
+  // Store the offset from mouse to block's top-left corner when dragging
+  const dragOffsetRef = useRef<{ col: number; row: number }>({ col: 0, row: 0 });
   const resizeSessionRef = useRef<{
     blockId: string;
     startCol: number;
@@ -258,41 +299,55 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
     lastRowSpan: number;
   } | null>(null);
 
-  // Load bento on mount
-  useEffect(() => {
-    const bento = getOrCreateActiveBento();
-    setActiveBento(bento);
-    setProfile(bento.data.profile);
-    setBlocks(bento.data.blocks);
-    setIsLoading(false);
-  }, []);
+  // Inline editing state
+  const [editingField, setEditingField] = useState<'name' | 'bio' | null>(null);
+  const [tempName, setTempName] = useState('');
+  const [tempBio, setTempBio] = useState('');
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const bioInputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-save function
-  const autoSave = useCallback((newProfile: UserProfile, newBlocks: BlockData[]) => {
-    if (!activeBento) return;
-    
-    // Clear previous timeout
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-    
-    // Debounce save by 500ms
-    saveTimeoutRef.current = setTimeout(() => {
-      updateBentoData(activeBento.id, {
-        profile: newProfile,
-        blocks: newBlocks
-      });
-    }, 500);
-  }, [activeBento]);
-
-  // Cleanup timeout on unmount
+  // Load bento on mount and migrate old grid format if needed
   useEffect(() => {
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
+    const loadBento = async () => {
+      try {
+        const bento = await initializeApp();
+        setActiveBento(bento);
+        setProfile(bento.data.profile);
+        // Migrate blocks from old 3-col grid to new 9-col grid
+        const migratedBlocks = migrateBlocksToNewGrid(bento.data.blocks);
+        setBlocks(migratedBlocks);
+        // Save migrated blocks if they changed
+        if (migratedBlocks !== bento.data.blocks) {
+          updateBentoData(bento.id, { profile: bento.data.profile, blocks: migratedBlocks });
+        }
+      } catch (e) {
+        console.error('Failed to load bento:', e);
+      } finally {
+        setIsLoading(false);
       }
     };
+    loadBento();
   }, []);
+
+  // Auto-save function - immediate save with status indicator
+  const autoSave = useCallback((newProfile: UserProfile, newBlocks: BlockData[]) => {
+    if (!activeBento) return;
+
+    setSaveStatus('saving');
+
+    // Save immediately
+    updateBentoData(activeBento.id, {
+      profile: newProfile,
+      blocks: newBlocks
+    });
+
+    // Show "saved" status briefly
+    setTimeout(() => {
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 1500);
+    }, 300);
+  }, [activeBento]);
 
   // Handle profile changes with auto-save
   const handleSetProfile = useCallback((newProfile: UserProfile | ((prev: UserProfile) => UserProfile)) => {
@@ -312,14 +367,8 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
     });
   }, [profile, autoSave]);
 
-  // Ensure every block has a stable grid position (required for drag + resize UX).
-  useEffect(() => {
-    if (!profile) return;
-    const next = ensureBlocksHavePositions(blocks);
-    if (next !== blocks) {
-      handleSetBlocks(next);
-    }
-  }, [blocks, handleSetBlocks, profile]);
+  // Note: Block positioning is handled when blocks are created (addBlock function)
+  // No automatic repositioning to avoid conflicts with user-placed blocks
 
   // Handle bento change from dropdown
   const handleBentoChange = useCallback((bento: SavedBento) => {
@@ -349,22 +398,66 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
       sessionStorage.removeItem('pendingBlockPosition');
     }
 
+    // Calculate spans based on block type
+    // Regular blocks: 3x3 cells on 9-col grid (equivalent to 1x1 on old 3-col grid)
+    // SOCIAL_ICON: 1x1 cell (small icon)
+    // SPACER: full width (9 cols)
+    const getSpans = () => {
+      if (type === BlockType.SOCIAL_ICON) return { colSpan: 1, rowSpan: 1 };
+      if (type === BlockType.SPACER) return { colSpan: 9, rowSpan: 1 };
+      return { colSpan: 3, rowSpan: 3 }; // Regular blocks take 3x3 cells
+    };
+    const { colSpan, rowSpan } = getSpans();
+
     const newBlock: BlockData = {
       id: Math.random().toString(36).substr(2, 9),
       type,
-      title: type === BlockType.SOCIAL ? 'X' : type === BlockType.MAP ? 'Location' : type === BlockType.SPACER ? 'Spacer' : 'New Block',
+      title: type === BlockType.SOCIAL ? 'X' : type === BlockType.SOCIAL_ICON ? '' : type === BlockType.MAP ? 'Location' : type === BlockType.SPACER ? 'Spacer' : 'New Block',
       content: '',
-      colSpan: type === BlockType.SPACER ? 3 : 1,
-      rowSpan: 1,
-      color: type === BlockType.SPACER ? 'bg-transparent' : 'bg-white',
+      colSpan,
+      rowSpan,
+      color: type === BlockType.SPACER ? 'bg-transparent' : type === BlockType.SOCIAL_ICON ? 'bg-gray-100' : 'bg-white',
       textColor: 'text-gray-900',
       gridColumn: gridPosition.col,
       gridRow: gridPosition.row,
       ...(type === BlockType.SOCIAL ? { socialPlatform: 'x' as const, socialHandle: '' } : {}),
+      ...(type === BlockType.SOCIAL_ICON ? { socialPlatform: 'instagram' as const, socialHandle: '' } : {}),
     };
     handleSetBlocks([...blocks, newBlock]);
     setEditingBlockId(newBlock.id);
     if (!isSidebarOpen) setIsSidebarOpen(true);
+  };
+
+  // Add a social icon block directly from configured account
+  const addSocialIconBlock = (platform: string, handle: string) => {
+    let gridPosition: { col?: number; row?: number } = {};
+    const pendingPosition = sessionStorage.getItem('pendingBlockPosition');
+    if (pendingPosition) {
+      try {
+        const { col, row } = JSON.parse(pendingPosition);
+        gridPosition = { col, row };
+      } catch {
+        // ignore
+      }
+      sessionStorage.removeItem('pendingBlockPosition');
+    }
+
+    const newBlock: BlockData = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: BlockType.SOCIAL_ICON,
+      title: '',
+      content: '',
+      colSpan: 1,
+      rowSpan: 1,
+      color: 'bg-white',
+      textColor: 'text-gray-900',
+      gridColumn: gridPosition.col,
+      gridRow: gridPosition.row,
+      socialPlatform: platform as any,
+      socialHandle: handle,
+    };
+    handleSetBlocks([...blocks, newBlock]);
+    // Don't open sidebar for social icons - they're pre-configured
   };
 
   const updateBlock = (updatedBlock: BlockData) => {
@@ -380,6 +473,136 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
     setHasDownloadedExport(false);
     setExportError(null);
     setShowDeployModal(true);
+  };
+
+  // Export current bento as JSON file
+  const handleExportJSON = () => {
+    if (!activeBento) return;
+    // Update bento with current state before exporting
+    const currentBento = {
+      ...activeBento,
+      data: { profile, blocks }
+    };
+    downloadBentoJSON(currentBento);
+  };
+
+  // Import bento from JSON file
+  const handleImportJSON = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const bento = await loadBentoFromFile(file);
+      setActiveBento(bento);
+      setProfile(bento.data.profile);
+      const migratedBlocks = migrateBlocksToNewGrid(bento.data.blocks);
+      setBlocks(migratedBlocks);
+      setEditingBlockId(null);
+    } catch (err) {
+      console.error('Failed to import bento:', err);
+      alert('Failed to import bento. Please check the JSON file.');
+    }
+
+    // Reset file input
+    e.target.value = '';
+  };
+
+  // Inline avatar upload - opens crop modal
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setPendingAvatarSrc(dataUrl);
+      setShowAvatarCropModal(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  // Get avatar style classes
+  const getAvatarClasses = (style?: AvatarStyle) => {
+    const s = style || { shape: 'rounded', shadow: true, border: true };
+    const classes: string[] = ['w-full', 'h-full', 'object-cover', 'transition-transform', 'duration-500', 'group-hover:scale-110'];
+    return classes.join(' ');
+  };
+
+  // Get avatar container classes based on style
+  const getAvatarContainerClasses = (style?: AvatarStyle) => {
+    const s = style || { shape: 'rounded', shadow: true, border: true };
+    const classes: string[] = ['w-40', 'h-40', 'overflow-hidden', 'relative', 'z-10', 'bg-gray-100'];
+
+    // Shape
+    if (s.shape === 'circle') classes.push('rounded-full');
+    else if (s.shape === 'square') classes.push('rounded-none');
+    else classes.push('rounded-3xl');
+
+    // Shadow
+    if (s.shadow) classes.push('shadow-2xl');
+
+    return classes.join(' ');
+  };
+
+  // Get avatar container style
+  const getAvatarContainerStyle = (style?: AvatarStyle): React.CSSProperties => {
+    const s = style || { shape: 'rounded', shadow: true, border: true, borderColor: '#ffffff', borderWidth: 4 };
+    const styles: React.CSSProperties = {};
+
+    if (s.border) {
+      styles.border = `${s.borderWidth || 4}px solid ${s.borderColor || '#ffffff'}`;
+    }
+
+    return styles;
+  };
+
+  // Handle avatar style change
+  const handleAvatarStyleChange = (newStyle: AvatarStyle) => {
+    handleSetProfile(prev => ({ ...prev, avatarStyle: newStyle }));
+  };
+
+  // Start inline editing
+  const startEditingName = () => {
+    setTempName(profile.name);
+    setEditingField('name');
+    setTimeout(() => nameInputRef.current?.focus(), 10);
+  };
+
+  const startEditingBio = () => {
+    setTempBio(profile.bio);
+    setEditingField('bio');
+    setTimeout(() => bioInputRef.current?.focus(), 10);
+  };
+
+  // Save inline edits
+  const saveNameEdit = () => {
+    if (tempName.trim()) {
+      setProfile(prev => ({ ...prev, name: tempName.trim() }));
+    }
+    setEditingField(null);
+  };
+
+  const saveBioEdit = () => {
+    setProfile(prev => ({ ...prev, bio: tempBio }));
+    setEditingField(null);
+  };
+
+  // Handle key events for inline editing
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveNameEdit();
+    } else if (e.key === 'Escape') {
+      setEditingField(null);
+    }
+  };
+
+  const handleBioKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setEditingField(null);
+    }
+    // Allow Enter for new lines in bio
   };
 
   useEffect(() => {
@@ -620,8 +843,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
     
     const sourceBlock = blocks[sourceIndex];
     const targetBlock = blocks[targetIndex];
-    const GRID_COLS = 3;
-    
+
     // Helper to check if two blocks overlap
     const blocksOverlap = (a: BlockData, b: BlockData) => {
       if (a.gridColumn === undefined || a.gridRow === undefined || 
@@ -746,7 +968,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
     const style = window.getComputedStyle(grid);
     const colGap = parseFloat(style.columnGap || '0') || 0;
     const rowGap = parseFloat(style.rowGap || '0') || 0;
-    const rowHeight = parseFloat(style.gridAutoRows || '200') || 200;
+    const rowHeight = 64; // Fixed 64px row height
 
     const usableWidth = Math.max(0, rect.width - colGap * (GRID_COLS - 1));
     const colWidth = usableWidth / GRID_COLS || 1;
@@ -754,15 +976,15 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
     const x = clientX - rect.left;
     const y = clientY - rect.top;
 
-    const col = clamp(Math.floor(x / (colWidth + colGap)) + 1, 1, GRID_COLS);
-    const row = Math.max(1, Math.floor(y / (rowHeight + rowGap)) + 1);
+    // Use ceil for more responsive resizing (resize as soon as pointer enters new cell)
+    const col = clamp(Math.ceil(x / (colWidth + colGap)), 1, GRID_COLS);
+    const row = Math.max(1, Math.ceil(y / (rowHeight + rowGap))); // No upper limit for rows
 
     return { col, row };
   }, []);
 
   const handleResizeStart = useCallback(
     (block: BlockData, e: React.PointerEvent<HTMLButtonElement>) => {
-      if (!isSidebarOpen) return;
       if (viewMode !== 'desktop') return;
       if (!block.gridColumn || !block.gridRow) return;
 
@@ -776,6 +998,15 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
         lastColSpan: block.colSpan,
         lastRowSpan: block.rowSpan,
       };
+
+      // Disable native drag immediately on the block element.
+      const blockEl = (e.currentTarget as HTMLElement).closest('[data-block-id]') as HTMLElement | null;
+      if (blockEl) blockEl.setAttribute('draggable', 'false');
+
+      const previousCursor = document.body.style.cursor;
+      const previousSelect = document.body.style.userSelect;
+      document.body.style.cursor = 'nwse-resize';
+      document.body.style.userSelect = 'none';
 
       const onMove = (ev: PointerEvent) => {
         const session = resizeSessionRef.current;
@@ -802,6 +1033,8 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
         window.removeEventListener('pointercancel', onEnd as any);
         resizeSessionRef.current = null;
         setResizingBlockId(null);
+        document.body.style.cursor = previousCursor;
+        document.body.style.userSelect = previousSelect;
       };
 
       window.addEventListener('pointermove', onMove, { passive: false });
@@ -815,7 +1048,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
         // ignore
       }
     },
-    [getGridCellFromPointer, handleSetBlocks, isSidebarOpen, viewMode],
+    [getGridCellFromPointer, handleSetBlocks, viewMode],
   );
 
   const editingBlock = blocks.find(b => b.id === editingBlockId) || null;
@@ -921,11 +1154,31 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
 	                   </button>
 	                 )}
                  
-	                 <button 
+                 {/* JSON Import/Export */}
+                 <div className="flex items-center gap-1 border-r border-gray-200 pr-3 mr-1">
+                   <button
+                     onClick={handleExportJSON}
+                     className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                     title="Export as JSON"
+                   >
+                     <FileDown size={16} />
+                   </button>
+                   <label className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer" title="Import JSON">
+                     <Upload size={16} />
+                     <input
+                       type="file"
+                       accept=".json,application/json"
+                       onChange={handleImportJSON}
+                       className="hidden"
+                     />
+                   </label>
+                 </div>
+
+	                 <button
 	                   onClick={handleExport}
 	                   className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-black transition-colors text-xs font-semibold flex items-center gap-2"
 	                 >
-	                    <Download size={16} /> 
+	                    <Download size={16} />
 	                    <span className="hidden sm:inline">Deploy</span>
 	                 </button>
               </div>
@@ -935,55 +1188,138 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
         {/* LEFT: Profile Header (Fixed on Desktop) */}
         {viewMode === 'desktop' && (
           <div className="hidden lg:flex fixed left-0 top-0 w-[420px] h-screen flex-col justify-center items-start px-12 z-10">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               className="flex flex-col items-start text-left"
             >
-              <motion.div 
-                whileHover={{ scale: 1.02, rotate: 2 }}
-                whileTap={{ scale: 0.98 }}
-                className="relative group cursor-pointer mb-8" 
-                onClick={() => {
-                  setEditingBlockId(null);
-                  setShowSettingsModal(true);
-                }}
-              >
-                <div className="w-40 h-40 rounded-3xl overflow-hidden ring-4 ring-white shadow-2xl relative z-10 bg-gray-100">
+              {/* Avatar with inline upload and style options */}
+              <div className="relative group mb-8">
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  className={getAvatarContainerClasses(profile.avatarStyle)}
+                  style={getAvatarContainerStyle(profile.avatarStyle)}
+                >
                   {profile.avatarUrl ? (
-                    <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    <img src={profile.avatarUrl} alt={profile.name} className={getAvatarClasses(profile.avatarStyle)} />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl font-bold">{profile.name.charAt(0)}</div>
                   )}
-                </div>
-                <div className="absolute -bottom-2 -right-2 bg-white rounded-xl px-3 py-1.5 shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transition-all z-20 flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                  <span className="text-xs font-semibold text-gray-700">Click to edit</span>
-                </div>
-              </motion.div>
+                  {/* Overlay with action icons */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    {/* Upload/Change image button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        avatarInputRef.current?.click();
+                      }}
+                      className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+                      title="Changer l'image"
+                    >
+                      <Camera size={22} className="text-white" />
+                    </button>
+                    {/* Style button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowAvatarStyleModal(true);
+                      }}
+                      className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+                      title="Modifier le style"
+                    >
+                      <Palette size={22} className="text-white" />
+                    </button>
+                  </div>
+                </motion.div>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+              </div>
 
-              <div className="space-y-3">
-                <div 
-                  className="group cursor-pointer"
-                  onClick={() => {
-                    setEditingBlockId(null);
-                    setShowSettingsModal(true);
-                  }}
-                >
-                  <h1 className="text-4xl font-bold tracking-tight text-gray-900 group-hover:text-violet-600 transition-colors leading-[1.1]">
-                    {profile.name}
-                  </h1>
-                </div>
-                <p 
-                  className="text-base text-gray-500 font-medium leading-relaxed whitespace-pre-wrap cursor-pointer hover:text-gray-700 transition-colors max-w-xs"
-                  onClick={() => {
-                    setEditingBlockId(null);
-                    setShowSettingsModal(true);
-                  }}
-                >
-                  {profile.bio}
-                </p>
+              <div className="space-y-3 w-full max-w-xs">
+                {/* Inline Name Editing */}
+                {editingField === 'name' ? (
+                  <input
+                    ref={nameInputRef}
+                    type="text"
+                    value={tempName}
+                    onChange={(e) => setTempName(e.target.value)}
+                    onBlur={saveNameEdit}
+                    onKeyDown={handleNameKeyDown}
+                    className="text-4xl font-bold tracking-tight text-gray-900 bg-transparent border-b-2 border-violet-500 outline-none w-full leading-[1.1]"
+                    placeholder="Your name"
+                  />
+                ) : (
+                  <div
+                    className="group cursor-pointer flex items-center gap-2"
+                    onClick={startEditingName}
+                  >
+                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 group-hover:text-violet-600 transition-colors leading-[1.1]">
+                      {profile.name}
+                    </h1>
+                    <Pencil size={16} className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                )}
+
+                {/* Inline Bio Editing */}
+                {editingField === 'bio' ? (
+                  <textarea
+                    ref={bioInputRef}
+                    value={tempBio}
+                    onChange={(e) => setTempBio(e.target.value)}
+                    onBlur={saveBioEdit}
+                    onKeyDown={handleBioKeyDown}
+                    className="text-base text-gray-600 font-medium leading-relaxed bg-transparent border-b-2 border-violet-500 outline-none w-full resize-none"
+                    rows={3}
+                    placeholder="Write something about yourself..."
+                  />
+                ) : (
+                  <p
+                    className="group text-base text-gray-500 font-medium leading-relaxed whitespace-pre-wrap cursor-pointer hover:text-gray-700 transition-colors flex items-start gap-2"
+                    onClick={startEditingBio}
+                  >
+                    <span className="flex-1">{profile.bio || 'Click to add bio...'}</span>
+                    <Pencil size={14} className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity mt-1 shrink-0" />
+                  </p>
+                )}
+
+                {/* Social icons row */}
+                {profile.showSocialInHeader && profile.socialAccounts && profile.socialAccounts.length > 0 && (
+                  <div className="flex flex-wrap gap-3 mt-4">
+                    {profile.socialAccounts.map((account) => {
+                      const option = getSocialPlatformOption(account.platform);
+                      if (!option) return null;
+                      const BrandIcon = option.brandIcon;
+                      const FallbackIcon = option.icon;
+                      const url = buildSocialUrl(account.platform, account.handle);
+                      const showCount = profile.showFollowerCount && account.followerCount;
+                      return (
+                        <a
+                          key={account.platform}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`${showCount ? 'px-3 py-2 rounded-full' : 'w-10 h-10 rounded-full'} bg-white shadow-md flex items-center justify-center gap-2 hover:scale-105 hover:shadow-lg transition-all`}
+                          title={option.label}
+                        >
+                          {BrandIcon ? (
+                            <BrandIcon size={20} style={{ color: option.brandColor }} />
+                          ) : (
+                            <FallbackIcon size={20} className="text-gray-600" />
+                          )}
+                          {showCount && (
+                            <span className="text-sm font-semibold text-gray-700">{formatFollowerCount(account.followerCount)}</span>
+                          )}
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>
@@ -1018,6 +1354,38 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                                             <img src={profile.avatarUrl} alt="Avatar" className="w-24 h-24 rounded-full mb-4 object-cover ring-2 ring-white shadow-lg"/>
                                             <h1 className="text-2xl font-bold text-gray-900 leading-tight">{profile.name}</h1>
                                             <p className="text-sm text-gray-500 mt-2">{profile.bio}</p>
+                                            {/* Social icons row in mobile */}
+                                            {profile.showSocialInHeader && profile.socialAccounts && profile.socialAccounts.length > 0 && (
+                                              <div className="flex flex-wrap justify-center gap-2 mt-4">
+                                                {profile.socialAccounts.map((account) => {
+                                                  const option = getSocialPlatformOption(account.platform);
+                                                  if (!option) return null;
+                                                  const BrandIcon = option.brandIcon;
+                                                  const FallbackIcon = option.icon;
+                                                  const url = buildSocialUrl(account.platform, account.handle);
+                                                  const showCount = profile.showFollowerCount && account.followerCount;
+                                                  return (
+                                                    <a
+                                                      key={account.platform}
+                                                      href={url}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      className={`${showCount ? 'px-2 py-1 rounded-full' : 'w-8 h-8 rounded-full'} bg-white shadow-sm flex items-center justify-center gap-1`}
+                                                      title={option.label}
+                                                    >
+                                                      {BrandIcon ? (
+                                                        <BrandIcon size={16} style={{ color: option.brandColor }} />
+                                                      ) : (
+                                                        <FallbackIcon size={16} className="text-gray-600" />
+                                                      )}
+                                                      {showCount && (
+                                                        <span className="text-xs font-semibold text-gray-700">{formatFollowerCount(account.followerCount)}</span>
+                                                      )}
+                                                    </a>
+                                                  );
+                                                })}
+                                              </div>
+                                            )}
                                         </div>
                                         <div className="p-4 grid grid-cols-1 gap-4">
                                             {sortedMobileBlocks.map(block => (
@@ -1043,8 +1411,6 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                         /* DESKTOP GRID - Fixed grid with explicit positioning */
                         <>
                             {(() => {
-                                const GRID_COLS = 3;
-                                
                                 // Auto-assign positions to blocks without explicit positions
                                 const occupiedCells = new Set<string>();
                                 const blocksWithPositions = blocks.map((block) => {
@@ -1108,18 +1474,18 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                                     return block;
                                 });
 
-                                // Calculate grid rows needed
-                                let maxRow = 1;
+                                // Calculate max row from blocks + add extra rows for new content
+                                let maxRow = 3;
                                 finalBlocks.forEach(b => {
                                     if (b.gridRow !== undefined) {
                                         maxRow = Math.max(maxRow, b.gridRow + b.rowSpan - 1);
                                     }
                                 });
-                                const GRID_ROWS = maxRow + 2; // Add 2 extra rows for new blocks
+                                const displayRows = maxRow + 3 + extraRows; // Add 3 extra rows + user-added rows
 
                                 // Generate empty cell placeholders
                                 const emptyCells: Array<{col: number, row: number}> = [];
-                                for (let row = 1; row <= GRID_ROWS; row++) {
+                                for (let row = 1; row <= displayRows; row++) {
                                     for (let col = 1; col <= GRID_COLS; col++) {
                                         if (!occupiedCells.has(`${col}-${row}`)) {
                                             emptyCells.push({ col, row });
@@ -1131,64 +1497,19 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                                     if (!draggedBlockId) return;
                                     const blockIndex = blocks.findIndex(b => b.id === draggedBlockId);
                                     if (blockIndex === -1) return;
-                                    
+
                                     const sourceBlock = blocks[blockIndex];
-                                    
-                                    // Helper to check if two blocks overlap
-                                    const blocksOverlap = (a: { gridColumn?: number, gridRow?: number, colSpan: number, rowSpan: number }, 
-                                                          b: { gridColumn?: number, gridRow?: number, colSpan: number, rowSpan: number }) => {
-                                      if (a.gridColumn === undefined || a.gridRow === undefined || 
-                                          b.gridColumn === undefined || b.gridRow === undefined) return false;
-                                      
-                                      const aRight = a.gridColumn + Math.min(a.colSpan, GRID_COLS);
-                                      const aBottom = a.gridRow + a.rowSpan;
-                                      const bRight = b.gridColumn + Math.min(b.colSpan, GRID_COLS);
-                                      const bBottom = b.gridRow + b.rowSpan;
-                                      
-                                      return !(aRight <= b.gridColumn || a.gridColumn >= bRight || 
-                                               aBottom <= b.gridRow || a.gridRow >= bBottom);
-                                    };
-                                    
-                                    // Helper to find next available position
-                                    const findNextPosition = (block: BlockData, occupied: Set<string>): { col: number, row: number } => {
-                                      const neededCols = Math.min(block.colSpan, GRID_COLS);
-                                      for (let r = 1; r <= 20; r++) {
-                                        for (let c = 1; c <= GRID_COLS - neededCols + 1; c++) {
-                                          let canPlace = true;
-                                          for (let cc = c; cc < c + neededCols && canPlace; cc++) {
-                                            for (let rr = r; rr < r + block.rowSpan && canPlace; rr++) {
-                                              if (occupied.has(`${cc}-${rr}`)) canPlace = false;
-                                            }
-                                          }
-                                          if (canPlace) return { col: c, row: r };
-                                        }
-                                      }
-                                      return { col: 1, row: 1 };
-                                    };
-                                    
+
+                                    // Simple positioning: place block's top-left at the drop cell
+                                    // Clamp to grid bounds (columns only, rows unlimited)
+                                    const clampedCol = Math.max(1, Math.min(col, GRID_COLS - sourceBlock.colSpan + 1));
+                                    const clampedRow = Math.max(1, row);
+
                                     // Move source block to new position
-                                    const movedBlock = { ...sourceBlock, gridColumn: col, gridRow: row };
-                                    let newBlocks = blocks.map(b => b.id === sourceBlock.id ? movedBlock : b);
-                                    
-                                    // Find and relocate conflicting blocks
-                                    const conflicting = newBlocks.filter(b => b.id !== movedBlock.id && blocksOverlap(movedBlock, b));
-                                    
-                                    conflicting.forEach(conflict => {
-                                      const occupied = new Set<string>();
-                                      newBlocks.forEach(b => {
-                                        if (b.id === conflict.id || b.gridColumn === undefined || b.gridRow === undefined) return;
-                                        const cols = Math.min(b.colSpan, GRID_COLS);
-                                        for (let c = b.gridColumn; c < b.gridColumn + cols; c++) {
-                                          for (let r = b.gridRow; r < b.gridRow + b.rowSpan; r++) {
-                                            occupied.add(`${c}-${r}`);
-                                          }
-                                        }
-                                      });
-                                      
-                                      const newPos = findNextPosition(conflict, occupied);
-                                      newBlocks = newBlocks.map(b => b.id === conflict.id ? { ...b, gridColumn: newPos.col, gridRow: newPos.row } : b);
-                                    });
-                                    
+                                    // Move to end of array so it appears on top
+                                    const movedBlock = { ...sourceBlock, gridColumn: clampedCol, gridRow: clampedRow };
+                                    const newBlocks = [...blocks.filter(b => b.id !== sourceBlock.id), movedBlock];
+
                                     handleSetBlocks(newBlocks);
                                     handleDragEnd();
                                 };
@@ -1201,25 +1522,25 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                                 };
 
                                 return (
-                                    <motion.main 
+                                    <motion.main
                                         ref={gridRef as any}
                                         layout
-                                        className="grid gap-5"
-                                        style={{ 
-                                            gridTemplateColumns: 'repeat(3, 1fr)',
-                                            gridAutoRows: '200px',
+                                        className="grid gap-2"
+                                        style={{
+                                            gridTemplateColumns: 'repeat(9, 1fr)',
+                                            gridAutoRows: '64px', // Auto rows for scrollable content
                                         }}
                                     >
-                                        {/* Render blocks with positions */}
+                                        {/* Render blocks with positions - later blocks have higher z-index for overlapping */}
                                         <AnimatePresence>
-                                        {finalBlocks.map((block) => (
-                                            <Block 
+                                        {finalBlocks.map((block, index) => (
+                                            <Block
                                                 key={block.id}
-                                                block={block} 
+                                                block={{ ...block, zIndex: index + 1 }}
                                                 isSelected={editingBlockId === block.id}
                                                 isDragTarget={dragOverBlockId === block.id}
                                                 isDragging={draggedBlockId === block.id}
-                                                enableResize={viewMode === 'desktop' && isSidebarOpen}
+                                                enableResize={viewMode === 'desktop'}
                                                 isResizing={resizingBlockId === block.id}
                                                 onResizeStart={handleResizeStart}
                                                 onEdit={(b) => { setEditingBlockId(b.id); setIsSidebarOpen(true); }}
@@ -1228,6 +1549,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                                                 onDragEnter={handleDragEnter}
                                                 onDragEnd={handleDragEnd}
                                                 onDrop={handleDrop}
+                                                onInlineUpdate={updateBlock}
                                             />
                                         ))}
                                         </AnimatePresence>
@@ -1237,7 +1559,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                                             <motion.div
                                                 key={`empty-${col}-${row}`}
                                                 initial={{ opacity: 0 }}
-                                                animate={{ opacity: draggedBlockId ? 1 : 0.6 }}
+                                                animate={{ opacity: 1 }}
                                                 style={{
                                                     gridColumnStart: col,
                                                     gridRowStart: row,
@@ -1246,33 +1568,37 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                                                 onDragOver={(e) => e.preventDefault()}
                                                 onDrop={(e) => { e.preventDefault(); handleDropOnCell(col, row); }}
                                                 onClick={() => handleClickEmptyCell(col, row)}
-                                                className={`border-2 border-dashed rounded-[2rem] flex flex-col items-center justify-center transition-all duration-300 group cursor-pointer min-h-[180px] ${
-                                                    draggedBlockId 
+                                                className={`border border-dashed rounded-md flex items-center justify-center transition-all duration-200 group cursor-pointer ${
+                                                    draggedBlockId
                                                         ? dragOverSlotIndex === col * 100 + row
-                                                            ? 'border-violet-500 bg-violet-100/80 scale-[1.02] shadow-lg shadow-violet-200/50'
-                                                            : 'border-gray-300/50 bg-white/30 hover:border-violet-300 hover:bg-violet-50/50'
-                                                        : 'border-gray-200/40 bg-white/20 hover:border-gray-300/60 hover:bg-white/40'
+                                                            ? 'border-violet-500 bg-violet-100 scale-[1.02]'
+                                                            : 'border-gray-300 bg-gray-50/50 hover:border-violet-400 hover:bg-violet-50'
+                                                        : 'border-gray-200 bg-gray-50/30 hover:border-gray-300 hover:bg-gray-100/50'
                                                 }`}
                                             >
                                                 {draggedBlockId ? (
-                                                    <div className="flex flex-col items-center gap-2">
-                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${dragOverSlotIndex === col * 100 + row ? 'bg-violet-200 scale-110' : 'bg-gray-100/60'}`}>
-                                                            <Plus size={22} className={dragOverSlotIndex === col * 100 + row ? 'text-violet-600' : 'text-gray-300'}/>
-                                                        </div>
-                                                        <span className={`text-xs font-medium ${dragOverSlotIndex === col * 100 + row ? 'text-violet-600' : 'text-gray-300'}`}>
-                                                            Drop here
-                                                        </span>
-                                                    </div>
+                                                    <Plus size={14} className={dragOverSlotIndex === col * 100 + row ? 'text-violet-500' : 'text-gray-400'} />
                                                 ) : (
-                                                    <div className="opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center gap-2">
-                                                        <div className="w-12 h-12 rounded-xl bg-gray-100/80 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                            <Plus size={20} className="text-gray-400"/>
-                                                        </div>
-                                                        <span className="text-xs font-medium text-gray-400">Add block</span>
-                                                    </div>
+                                                    <Plus size={12} className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
                                                 )}
                                             </motion.div>
                                         ))}
+
+                                        {/* Add more rows button - spans full width at bottom */}
+                                        <motion.button
+                                            type="button"
+                                            onClick={() => setExtraRows(prev => prev + 3)}
+                                            style={{
+                                                gridColumn: '1 / -1',
+                                                gridRow: displayRows + 1,
+                                            }}
+                                            className="h-12 border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center gap-2 text-gray-400 hover:border-violet-400 hover:text-violet-500 hover:bg-violet-50/50 transition-all group"
+                                            whileHover={{ scale: 1.01 }}
+                                            whileTap={{ scale: 0.99 }}
+                                        >
+                                            <Plus size={18} className="group-hover:rotate-90 transition-transform" />
+                                            <span className="text-sm font-medium">Ajouter des lignes</span>
+                                        </motion.button>
                                     </motion.main>
                                 );
                             })()}
@@ -1301,11 +1627,46 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
         )}
       </div>
 
+      {/* SAVE STATUS INDICATOR */}
+      <AnimatePresence>
+        {saveStatus !== 'idle' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 bg-white rounded-full shadow-lg border border-gray-100"
+          >
+            {saveStatus === 'saving' ? (
+              <>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full"
+                />
+                <span className="text-sm font-medium text-gray-600">Saving...</span>
+              </>
+            ) : (
+              <>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center"
+                >
+                  <Check size={10} className="text-white" />
+                </motion.div>
+                <span className="text-sm font-medium text-gray-600">Saved</span>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 2. SIDEBAR EDITOR */}
-      <EditorSidebar 
+      <EditorSidebar
          isOpen={isSidebarOpen}
          profile={profile}
          addBlock={addBlock}
+         addSocialIconBlock={addSocialIconBlock}
          editingBlock={editingBlock}
          updateBlock={updateBlock}
          onDelete={deleteBlock}
@@ -1318,9 +1679,43 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
         onClose={() => setShowSettingsModal(false)}
         profile={profile}
         setProfile={handleSetProfile}
+        bentoName={activeBento?.name}
+        onBentoNameChange={(name) => {
+          if (activeBento) {
+            setActiveBento({ ...activeBento, name });
+            renameBento(activeBento.id, name);
+          }
+        }}
+        blocks={blocks}
+        onBlocksChange={handleSetBlocks}
       />
 
-      {/* 4. DEPLOY MODAL */}
+      {/* 4. AVATAR CROP MODAL */}
+      <ImageCropModal
+        isOpen={showAvatarCropModal && !!pendingAvatarSrc}
+        src={pendingAvatarSrc || ''}
+        title="Recadrer la photo de profil"
+        onCancel={() => {
+          setShowAvatarCropModal(false);
+          setPendingAvatarSrc(null);
+        }}
+        onConfirm={(dataUrl) => {
+          handleSetProfile(prev => ({ ...prev, avatarUrl: dataUrl }));
+          setShowAvatarCropModal(false);
+          setPendingAvatarSrc(null);
+        }}
+      />
+
+      {/* 5. AVATAR STYLE MODAL */}
+      <AvatarStyleModal
+        isOpen={showAvatarStyleModal}
+        onClose={() => setShowAvatarStyleModal(false)}
+        avatarUrl={profile.avatarUrl}
+        style={profile.avatarStyle || { shape: 'rounded', shadow: true, border: true, borderColor: '#ffffff', borderWidth: 4 }}
+        onStyleChange={handleAvatarStyleChange}
+      />
+
+      {/* 6. DEPLOY MODAL */}
       <AnimatePresence>
       {showDeployModal && (
           <motion.div 

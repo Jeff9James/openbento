@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { SavedBento } from '../types';
-import { getAllBentos, createBento } from '../services/storageService';
-import { ChevronDown, Plus, FolderOpen, Check } from 'lucide-react';
+import { getAllBentos, createBento, deleteBento } from '../services/storageService';
+import { ChevronDown, Plus, FolderOpen, Check, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProfileDropdownProps {
@@ -69,6 +69,30 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
     }
   };
 
+  const handleDeleteBento = (e: React.MouseEvent, bentoId: string) => {
+    e.stopPropagation();
+
+    const bentoToDelete = bentos.find(b => b.id === bentoId);
+    if (!bentoToDelete) return;
+
+    const confirmDelete = window.confirm(`Delete "${bentoToDelete.name}"? This cannot be undone.`);
+    if (!confirmDelete) return;
+
+    deleteBento(bentoId);
+    const updatedBentos = getAllBentos();
+    setBentos(updatedBentos);
+
+    // If we deleted the active bento, switch to another one
+    if (bentoId === activeBentoId && updatedBentos.length > 0) {
+      onBentoChange(updatedBentos[0]);
+    } else if (updatedBentos.length === 0) {
+      // If no bentos left, create a new one
+      const newBento = createBento('My Bento');
+      onBentoChange(newBento);
+      setIsOpen(false);
+    }
+  };
+
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
     return date.toLocaleDateString('fr-FR', { 
@@ -115,37 +139,48 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
                 </div>
               ) : (
                 bentos.map((bento) => (
-                  <button
+                  <div
                     key={bento.id}
-                    onClick={() => {
-                      onBentoChange(bento);
-                      setIsOpen(false);
-                    }}
-                    className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left ${
+                    className={`group w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors ${
                       bento.id === activeBentoId ? 'bg-blue-50' : ''
                     }`}
                   >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
-                      bento.id === activeBentoId 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {bento.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium truncate ${
-                        bento.id === activeBentoId ? 'text-blue-600' : 'text-gray-900'
+                    <button
+                      onClick={() => {
+                        onBentoChange(bento);
+                        setIsOpen(false);
+                      }}
+                      className="flex-1 flex items-center gap-3 text-left min-w-0"
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${
+                        bento.id === activeBentoId
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {bento.name}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Updated {formatDate(bento.updatedAt)}
-                      </p>
-                    </div>
-                    {bento.id === activeBentoId && (
-                      <Check size={16} className="text-blue-500 shrink-0" />
-                    )}
-                  </button>
+                        {bento.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium truncate ${
+                          bento.id === activeBentoId ? 'text-blue-600' : 'text-gray-900'
+                        }`}>
+                          {bento.name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Updated {formatDate(bento.updatedAt)}
+                        </p>
+                      </div>
+                      {bento.id === activeBentoId && (
+                        <Check size={16} className="text-blue-500 shrink-0" />
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteBento(e, bento.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                      title="Delete bento"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 ))
               )}
             </div>

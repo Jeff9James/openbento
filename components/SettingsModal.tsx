@@ -1,25 +1,110 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Settings, Upload, X } from 'lucide-react';
-import type { UserProfile } from '../types';
+import { Plus, Settings, Trash2, Upload, X, Code, User, Share2 } from 'lucide-react';
+import type { SocialAccount, SocialPlatform, UserProfile, BlockData } from '../types';
 import { AVATAR_PLACEHOLDER } from '../constants';
 import ImageCropModal from './ImageCropModal';
+import { buildSocialUrl, getSocialPlatformOption, SOCIAL_PLATFORM_OPTIONS, formatFollowerCount } from '../socialPlatforms';
 
 type SettingsModalProps = {
   isOpen: boolean;
   onClose: () => void;
   profile: UserProfile;
   setProfile: (next: UserProfile | ((prev: UserProfile) => UserProfile)) => void;
+  bentoName?: string;
+  onBentoNameChange?: (name: string) => void;
+  // For raw JSON editing
+  blocks?: BlockData[];
+  onBlocksChange?: (blocks: BlockData[]) => void;
 };
+
+type TabType = 'general' | 'social' | 'json';
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
   profile,
   setProfile,
+  bentoName,
+  onBentoNameChange,
+  blocks,
+  onBlocksChange,
 }) => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('general');
+
+  // Social accounts state
+  const [isAddingSocial, setIsAddingSocial] = useState(false);
+  const [newPlatform, setNewPlatform] = useState<SocialPlatform>('instagram');
+  const [newHandle, setNewHandle] = useState('');
+
+  // JSON editor state
+  const [jsonText, setJsonText] = useState('');
+  const [jsonError, setJsonError] = useState<string | null>(null);
+
+  const socialAccounts = profile.socialAccounts || [];
+
+  // Update JSON text when modal opens or data changes
+  useEffect(() => {
+    if (isOpen && activeTab === 'json') {
+      const fullConfig = {
+        name: bentoName || 'My Bento',
+        profile,
+        blocks: blocks || [],
+      };
+      setJsonText(JSON.stringify(fullConfig, null, 2));
+      setJsonError(null);
+    }
+  }, [isOpen, activeTab, profile, blocks, bentoName]);
+
+  const addSocialAccount = () => {
+    if (!newHandle.trim()) return;
+
+    const exists = socialAccounts.some(acc => acc.platform === newPlatform);
+    if (exists) {
+      setProfile({
+        ...profile,
+        socialAccounts: socialAccounts.map(acc =>
+          acc.platform === newPlatform ? { ...acc, handle: newHandle.trim() } : acc
+        ),
+      });
+    } else {
+      setProfile({
+        ...profile,
+        socialAccounts: [...socialAccounts, { platform: newPlatform, handle: newHandle.trim() }],
+      });
+    }
+
+    setNewHandle('');
+    setIsAddingSocial(false);
+  };
+
+  const removeSocialAccount = (platform: SocialPlatform) => {
+    setProfile({
+      ...profile,
+      socialAccounts: socialAccounts.filter(acc => acc.platform !== platform),
+    });
+  };
+
+  const updateSocialHandle = (platform: SocialPlatform, handle: string) => {
+    setProfile({
+      ...profile,
+      socialAccounts: socialAccounts.map(acc =>
+        acc.platform === platform ? { ...acc, handle } : acc
+      ),
+    });
+  };
+
+  const updateFollowerCount = (platform: SocialPlatform, count: string) => {
+    const numCount = count ? parseInt(count.replace(/\D/g, ''), 10) : undefined;
+    setProfile({
+      ...profile,
+      socialAccounts: socialAccounts.map(acc =>
+        acc.platform === platform ? { ...acc, followerCount: numCount } : acc
+      ),
+    });
+  };
 
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,6 +127,37 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const resetAvatar = () => setProfile({ ...profile, avatarUrl: AVATAR_PLACEHOLDER });
 
+  const handleJsonSave = () => {
+    try {
+      const parsed = JSON.parse(jsonText);
+
+      // Validate structure
+      if (!parsed.profile || !Array.isArray(parsed.blocks)) {
+        setJsonError('Invalid structure: must have "profile" and "blocks"');
+        return;
+      }
+
+      // Apply changes
+      if (parsed.name && onBentoNameChange) {
+        onBentoNameChange(parsed.name);
+      }
+      setProfile(parsed.profile);
+      if (onBlocksChange) {
+        onBlocksChange(parsed.blocks);
+      }
+
+      setJsonError(null);
+    } catch (e) {
+      setJsonError(`JSON Parse Error: ${(e as Error).message}`);
+    }
+  };
+
+  const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
+    { id: 'general', label: 'General', icon: <User size={16} /> },
+    { id: 'social', label: 'Social', icon: <Share2 size={16} /> },
+    { id: 'json', label: 'Raw JSON', icon: <Code size={16} /> },
+  ];
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -51,125 +167,415 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         >
-	          <motion.div
-	            initial={{ scale: 0.95, opacity: 0, y: 16 }}
-	            animate={{ scale: 1, opacity: 1, y: 0 }}
-	            exit={{ scale: 0.95, opacity: 0, y: 16 }}
-	            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden ring-1 ring-gray-900/5"
-	            role="dialog"
-	            aria-modal="true"
-	            aria-label="Settings"
-	          >
-	            <div className="p-6 pb-4 flex justify-between items-start border-b border-gray-100">
-	              <div>
-	                <div className="w-9 h-9 bg-gray-900 rounded-full flex items-center justify-center text-white mb-3">
-	                  <Settings size={18} />
-	                </div>
-	                <h2 className="text-xl font-bold text-gray-900">Settings</h2>
-	                <p className="text-gray-500 mt-1 text-sm">Profile and branding.</p>
-	              </div>
-	              <button
-	                onClick={onClose}
-	                className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
-	                aria-label="Close settings"
-	              >
-	                <X size={20} />
-	              </button>
-	            </div>
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: 16 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 16 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden ring-1 ring-gray-900/5"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Settings"
+          >
+            {/* Header */}
+            <div className="p-6 pb-4 flex justify-between items-start border-b border-gray-100">
+              <div>
+                <div className="w-9 h-9 bg-gray-900 rounded-full flex items-center justify-center text-white mb-3">
+                  <Settings size={18} />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Settings</h2>
+                <p className="text-gray-500 mt-1 text-sm">Profile, social accounts, and configuration.</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                aria-label="Close settings"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-	            <div className="p-6 pt-4 space-y-6 max-h-[70vh] overflow-y-auto">
-	              {/* Profile */}
-	              <section className="space-y-4">
-	                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Profile</h3>
-	                <div className="flex items-start gap-4">
-	                  <div className="shrink-0">
-	                    <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 ring-2 ring-white shadow-lg">
-	                      <img src={profile.avatarUrl || AVATAR_PLACEHOLDER} alt="Avatar" className="w-full h-full object-cover" />
-	                    </div>
-                    <input
-                      ref={avatarInputRef}
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleAvatarUpload}
-	                    />
-	                    <div className="mt-3 flex gap-2">
-	                      <button
-	                        type="button"
-	                        onClick={() => avatarInputRef.current?.click()}
-	                        className="px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors inline-flex items-center gap-2"
-	                      >
-	                        <Upload size={14} />
-	                        Upload
-	                      </button>
+            {/* Tabs */}
+            <div className="px-6 pt-4 flex gap-1 border-b border-gray-100">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
+                    activeTab === tab.id
+                      ? 'bg-gray-100 text-gray-900 border-b-2 border-gray-900 -mb-[2px]'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Content */}
+            <div className="p-6 pt-4 space-y-6 max-h-[60vh] overflow-y-auto">
+              {/* GENERAL TAB */}
+              {activeTab === 'general' && (
+                <>
+                  {/* Bento Name */}
+                  {onBentoNameChange && (
+                    <section className="space-y-3">
+                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Bento</h3>
+                      <div className="p-3 bg-white border border-gray-200 rounded-xl">
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Project Name</label>
+                        <input
+                          type="text"
+                          value={bentoName || ''}
+                          onChange={(e) => onBentoNameChange(e.target.value)}
+                          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-800 focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 focus:outline-none transition-all"
+                          placeholder="My Bento"
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1.5">Used as filename when exporting JSON</p>
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Profile */}
+                  <section className="space-y-4">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Profile</h3>
+                    <div className="flex items-start gap-4">
+                      <div className="shrink-0">
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 ring-2 ring-white shadow-lg">
+                          <img src={profile.avatarUrl || AVATAR_PLACEHOLDER} alt="Avatar" className="w-full h-full object-cover" />
+                        </div>
+                        <input
+                          ref={avatarInputRef}
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleAvatarUpload}
+                        />
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => avatarInputRef.current?.click()}
+                            className="px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors inline-flex items-center gap-2"
+                          >
+                            <Upload size={14} />
+                            Upload
+                          </button>
+                          <button
+                            type="button"
+                            onClick={resetAvatar}
+                            className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-100 transition-colors"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Name</label>
+                          <input
+                            value={profile.name}
+                            onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-semibold text-gray-800"
+                            placeholder="Your name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Avatar URL</label>
+                          <input
+                            value={profile.avatarUrl || ''}
+                            onChange={(e) => setProfile({ ...profile, avatarUrl: e.target.value })}
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-mono text-xs text-gray-700"
+                            placeholder="/images/avatar.jpg or https://..."
+                          />
+                          <p className="text-[10px] text-gray-400 mt-1">Enter a path or URL instead of uploading to avoid base64 encoding</p>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Bio</label>
+                          <textarea
+                            value={profile.bio}
+                            onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-medium text-gray-700 h-24 resize-none"
+                            placeholder="A short bio…"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Branding */}
+                  <section className="space-y-3">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Branding</h3>
+                    <div className="flex items-center justify-between gap-4 p-3 bg-white border border-gray-200 rounded-xl">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900">Show OpenBento credit</p>
+                        <p className="text-xs text-gray-400">Displays the OpenBento footer in the builder and export.</p>
+                      </div>
                       <button
                         type="button"
-                        onClick={resetAvatar}
-                        className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setProfile({ ...profile, showBranding: !(profile.showBranding !== false) })}
+                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                          profile.showBranding !== false ? 'bg-gray-900' : 'bg-gray-200'
+                        }`}
+                        aria-pressed={profile.showBranding !== false}
+                        aria-label="Toggle OpenBento branding"
                       >
-                        Reset
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                            profile.showBranding !== false ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
                       </button>
                     </div>
+
+                    {/* Social icons in header */}
+                    <div className="flex items-center justify-between gap-4 p-3 bg-white border border-gray-200 rounded-xl">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-900">Social icons in header</p>
+                        <p className="text-xs text-gray-400">Display your social icons under your name and bio.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setProfile({ ...profile, showSocialInHeader: !profile.showSocialInHeader })}
+                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                          profile.showSocialInHeader ? 'bg-gray-900' : 'bg-gray-200'
+                        }`}
+                        aria-pressed={profile.showSocialInHeader}
+                        aria-label="Toggle social icons in header"
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                            profile.showSocialInHeader ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Show follower count */}
+                    {profile.showSocialInHeader && (
+                      <div className="flex items-center justify-between gap-4 p-3 bg-white border border-gray-200 rounded-xl ml-4">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">Show follower count</p>
+                          <p className="text-xs text-gray-400">Display follower numbers next to icons (e.g., 220k).</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setProfile({ ...profile, showFollowerCount: !profile.showFollowerCount })}
+                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                            profile.showFollowerCount ? 'bg-gray-900' : 'bg-gray-200'
+                          }`}
+                          aria-pressed={profile.showFollowerCount}
+                          aria-label="Toggle follower count"
+                        >
+                          <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                              profile.showFollowerCount ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    )}
+                  </section>
+                </>
+              )}
+
+              {/* SOCIAL TAB */}
+              {activeTab === 'social' && (
+                <section className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Social Accounts</h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Set newPlatform to first available platform not already added
+                        const availablePlatforms = SOCIAL_PLATFORM_OPTIONS.filter(
+                          opt => !socialAccounts.some(acc => acc.platform === opt.id)
+                        );
+                        if (availablePlatforms.length > 0) {
+                          setNewPlatform(availablePlatforms[0].id);
+                        }
+                        setIsAddingSocial(true);
+                      }}
+                      className="flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-700 transition-colors"
+                    >
+                      <Plus size={14} />
+                      Add
+                    </button>
                   </div>
 
-                  <div className="flex-1 space-y-3">
-	                    <div>
-	                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Name</label>
-	                      <input
-	                        value={profile.name}
-	                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-	                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-semibold text-gray-800"
-	                        placeholder="Your name"
-	                      />
-	                    </div>
-	                    <div>
-	                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Bio</label>
-	                      <textarea
-	                        value={profile.bio}
-	                        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-	                        className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-medium text-gray-700 h-24 resize-none"
-	                        placeholder="A short bio…"
-	                      />
-	                    </div>
-                  </div>
-                </div>
-              </section>
+                  <div className="space-y-2">
+                    {socialAccounts.length === 0 && !isAddingSocial && (
+                      <p className="text-sm text-gray-400 text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                        No social accounts configured yet
+                      </p>
+                    )}
 
-	              {/* Branding */}
-	              <section className="space-y-3">
-	                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Branding</h3>
-	                <div className="flex items-center justify-between gap-4 p-3 bg-white border border-gray-200 rounded-xl">
-	                  <div className="min-w-0">
-	                    <p className="text-sm font-semibold text-gray-900">Show OpenBento credit</p>
-	                    <p className="text-xs text-gray-400">Displays the OpenBento footer in the builder and export.</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setProfile({ ...profile, showBranding: !(profile.showBranding !== false) })}
-                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                      profile.showBranding !== false ? 'bg-gray-900' : 'bg-gray-200'
-                    }`}
-                    aria-pressed={profile.showBranding !== false}
-                    aria-label="Toggle OpenBento branding"
-                  >
-                    <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                        profile.showBranding !== false ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-	              </section>
-	            </div>
+                    {socialAccounts.map((account) => {
+                      const option = getSocialPlatformOption(account.platform);
+                      if (!option) return null;
+                      const BrandIcon = option.brandIcon;
+                      const FallbackIcon = option.icon;
+                      const url = buildSocialUrl(account.platform, account.handle);
 
-	            <div className="p-6 pt-4 border-t border-gray-100">
-	              <button
-	                onClick={onClose}
-	                className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-colors shadow-sm"
-	              >
-	                Close
-	              </button>
-	            </div>
+                      return (
+                        <div
+                          key={account.platform}
+                          className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl group"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                            {BrandIcon ? (
+                              <BrandIcon size={18} style={{ color: option.brandColor }} />
+                            ) : (
+                              <FallbackIcon size={18} className="text-gray-600" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900">{option.label}</p>
+                            <input
+                              type="text"
+                              value={account.handle}
+                              onChange={(e) => updateSocialHandle(account.platform, e.target.value)}
+                              placeholder={option.placeholder}
+                              className="w-full text-xs text-gray-500 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                            />
+                          </div>
+                          <div className="shrink-0 w-20">
+                            <input
+                              type="text"
+                              value={account.followerCount || ''}
+                              onChange={(e) => updateFollowerCount(account.platform, e.target.value)}
+                              placeholder="Followers"
+                              className="w-full text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-violet-500"
+                            />
+                            {account.followerCount && (
+                              <p className="text-[9px] text-gray-400 text-right mt-0.5">{formatFollowerCount(account.followerCount)}</p>
+                            )}
+                          </div>
+                          {url && (
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-gray-400 hover:text-violet-600 truncate max-w-[120px]"
+                              title={url}
+                            >
+                              Preview
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeSocialAccount(account.platform)}
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                            aria-label={`Remove ${option.label}`}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      );
+                    })}
+
+                    {isAddingSocial && (
+                      <div className="p-3 bg-violet-50 border border-violet-200 rounded-xl space-y-3">
+                        <div className="flex gap-2">
+                          <select
+                            value={newPlatform}
+                            onChange={(e) => setNewPlatform(e.target.value as SocialPlatform)}
+                            className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-800 focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 focus:outline-none"
+                          >
+                            {SOCIAL_PLATFORM_OPTIONS.filter(
+                              opt => !socialAccounts.some(acc => acc.platform === opt.id)
+                            ).map((opt) => (
+                              <option key={opt.id} value={opt.id}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <input
+                          type="text"
+                          value={newHandle}
+                          onChange={(e) => setNewHandle(e.target.value)}
+                          placeholder={getSocialPlatformOption(newPlatform)?.placeholder || 'yourhandle'}
+                          className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 focus:outline-none"
+                          onKeyDown={(e) => e.key === 'Enter' && addSocialAccount()}
+                          autoFocus
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAddingSocial(false);
+                              setNewHandle('');
+                            }}
+                            className="flex-1 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={addSocialAccount}
+                            disabled={!newHandle.trim()}
+                            className="flex-1 py-2 bg-violet-600 text-white rounded-lg text-sm font-semibold hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Add Account
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {/* JSON TAB */}
+              {activeTab === 'json' && (
+                <section className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Raw Configuration</h3>
+                      <p className="text-xs text-gray-400 mt-1">Edit the JSON directly. Be careful!</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleJsonSave}
+                      className="px-4 py-2 bg-violet-600 text-white rounded-lg text-xs font-semibold hover:bg-violet-700 transition-colors"
+                    >
+                      Apply Changes
+                    </button>
+                  </div>
+
+                  {jsonError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                      {jsonError}
+                    </div>
+                  )}
+
+                  <textarea
+                    value={jsonText}
+                    onChange={(e) => setJsonText(e.target.value)}
+                    className="w-full h-[400px] bg-gray-900 text-green-400 font-mono text-xs p-4 rounded-xl border-0 focus:ring-2 focus:ring-violet-500 focus:outline-none resize-none"
+                    spellCheck={false}
+                  />
+
+                  <div className="text-xs text-gray-400 space-y-1">
+                    <p><strong>Structure:</strong></p>
+                    <ul className="list-disc list-inside space-y-0.5 text-gray-500">
+                      <li><code>name</code>: Bento project name</li>
+                      <li><code>profile</code>: User profile (name, bio, avatarUrl, etc.)</li>
+                      <li><code>blocks</code>: Array of blocks with gridColumn, gridRow, colSpan, rowSpan</li>
+                    </ul>
+                  </div>
+                </section>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 pt-4 border-t border-gray-100">
+              <button
+                onClick={onClose}
+                className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-colors shadow-sm"
+              >
+                Close
+              </button>
+            </div>
           </motion.div>
 
           <ImageCropModal

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { BlockData, BlockType } from '../types';
-import { ArrowUpRight, MapPin, Type, Image as ImageIcon, Link as LinkIcon, Twitter, Github, Linkedin, Youtube, Instagram, GripHorizontal, MoveVertical, Play, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowUpRight, MapPin, Type, Image as ImageIcon, Link as LinkIcon, Twitter, Github, Linkedin, Youtube, Instagram, GripHorizontal, MoveVertical, Play, Loader2, ExternalLink, Pencil } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getSocialPlatformOption, inferSocialPlatformFromUrl } from '../socialPlatforms';
 
@@ -18,6 +18,7 @@ interface BlockProps {
   enableResize?: boolean;
   isResizing?: boolean;
   onResizeStart?: (block: BlockData, e: React.PointerEvent<HTMLButtonElement>) => void;
+  onInlineUpdate?: (block: BlockData) => void;
 }
 
 const Block: React.FC<BlockProps> = ({
@@ -34,9 +35,73 @@ const Block: React.FC<BlockProps> = ({
   enableResize,
   isResizing,
   onResizeStart,
+  onInlineUpdate,
 }) => {
   const [fetchedVideos, setFetchedVideos] = useState<Array<{ id: string; title: string; thumbnail: string }>>(block.youtubeVideos || []);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Inline editing state
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isEditingSubtext, setIsEditingSubtext] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState(block.title || '');
+  const [editSubtextValue, setEditSubtextValue] = useState(block.subtext || '');
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const subtextInputRef = useRef<HTMLInputElement>(null);
+
+  // Update local state when block changes
+  useEffect(() => {
+    setEditTitleValue(block.title || '');
+    setEditSubtextValue(block.subtext || '');
+  }, [block.title, block.subtext]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
+
+  useEffect(() => {
+    if (isEditingSubtext && subtextInputRef.current) {
+      subtextInputRef.current.focus();
+      subtextInputRef.current.select();
+    }
+  }, [isEditingSubtext]);
+
+  const handleTitleSave = () => {
+    if (onInlineUpdate && editTitleValue !== block.title) {
+      onInlineUpdate({ ...block, title: editTitleValue });
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleSubtextSave = () => {
+    if (onInlineUpdate && editSubtextValue !== block.subtext) {
+      onInlineUpdate({ ...block, subtext: editSubtextValue });
+    }
+    setIsEditingSubtext(false);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      setEditTitleValue(block.title || '');
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleSubtextKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubtextSave();
+    } else if (e.key === 'Escape') {
+      setEditSubtextValue(block.subtext || '');
+      setIsEditingSubtext(false);
+    }
+  };
 
   useEffect(() => {
     if (block.type === BlockType.SOCIAL && block.channelId && (!block.youtubeVideos || block.youtubeVideos.length === 0)) {
@@ -107,12 +172,25 @@ const Block: React.FC<BlockProps> = ({
   const colClass = block.colSpan === 3 ? 'md:col-span-3 lg:col-span-3' : block.colSpan === 2 ? 'md:col-span-2 lg:col-span-2' : 'md:col-span-1 lg:col-span-1';
   const rowClass = block.rowSpan === 2 ? 'md:row-span-2' : 'md:row-span-1';
 
+  // Calculate border-radius based on block size (smaller = more rectangular)
+  const getBorderRadius = () => {
+    const minDim = Math.min(block.colSpan, block.rowSpan);
+    if (minDim <= 1) return '0.5rem'; // 8px for tiny blocks
+    if (minDim <= 2) return '0.625rem'; // 10px for small blocks
+    if (minDim <= 3) return '0.75rem'; // 12px for medium blocks
+    return '0.875rem'; // 14px for large blocks
+  };
+  const borderRadius = getBorderRadius();
+
   const resizeHandle =
     enableResize && onResizeStart ? (
       <button
         type="button"
         aria-label="Resize block"
-        className="absolute bottom-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto"
+        data-resize-handle="true"
+        className={`absolute bottom-2 right-2 z-30 transition-opacity pointer-events-auto ${
+          isResizing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        }`}
         onPointerDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -124,8 +202,8 @@ const Block: React.FC<BlockProps> = ({
         }}
         onDragStart={(e) => e.preventDefault()}
       >
-        <div className="w-6 h-6 rounded-lg bg-black/20 backdrop-blur-sm flex items-end justify-end p-1">
-          <div className="w-3 h-3 border-b-2 border-r-2 border-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]" />
+        <div className="w-6 h-6 rounded-lg bg-white/90 border border-white shadow-md flex items-end justify-end p-1 cursor-nwse-resize touch-none">
+          <div className="w-3 h-3 border-b-2 border-r-2 border-gray-900/70" />
         </div>
       </button>
     ) : null;
@@ -140,29 +218,44 @@ const Block: React.FC<BlockProps> = ({
     gridPositionStyle.gridRowStart = block.gridRow;
     gridPositionStyle.gridRowEnd = block.gridRow + block.rowSpan;
   }
+  // Z-index for overlapping blocks
+  if (block.zIndex !== undefined) {
+    gridPositionStyle.zIndex = block.zIndex;
+  }
 
 	  // Spacer Block
 	  if (block.type === BlockType.SPACER) {
 	      return (
-	        <motion.div
-	            layoutId={block.id}
-	            layout
-	            draggable={!isResizing}
-	            onDragStart={() => onDragStart(block.id)}
-	            onDragEnter={() => onDragEnter(block.id)}
-	            onDragOver={(e) => e.preventDefault()}
-	            onDragEnd={onDragEnd}
-	            onDrop={(e) => { e.preventDefault(); onDrop(block.id); }}
-	            onClick={() => onEdit(block)}
-	            className={`
-	                relative rounded-xl ${colClass} ${rowClass} cursor-pointer
-	                ${isSelected ? 'ring-2 ring-blue-500/50 bg-blue-50/50' : 'hover:bg-gray-100/50'}
-	                ${isDragTarget ? 'ring-2 ring-violet-500 bg-violet-50/50 scale-[1.02]' : ''}
-	                ${isDragging ? 'opacity-40 scale-95' : ''}
+        <motion.div
+            layoutId={block.id}
+            layout
+            draggable={!isResizing}
+            onDragStart={(e) => {
+              if (isResizing) {
+                e.preventDefault();
+                return;
+              }
+              if ((e.target as HTMLElement)?.closest('[data-resize-handle="true"]')) {
+                e.preventDefault();
+                return;
+              }
+              onDragStart(block.id);
+            }}
+            onDragEnter={() => onDragEnter(block.id)}
+            onDragOver={(e) => e.preventDefault()}
+            onDragEnd={onDragEnd}
+            onDrop={(e) => { e.preventDefault(); onDrop(block.id); }}
+            onClick={() => onEdit(block)}
+            data-block-id={block.id}
+            className={`
+                relative ${colClass} ${rowClass} cursor-pointer
+                ${isSelected ? 'ring-2 ring-blue-500/50 bg-blue-50/50' : 'hover:bg-gray-100/50'}
+                ${isDragTarget ? 'ring-2 ring-violet-500 bg-violet-50/50 scale-[1.02]' : ''}
+                ${isDragging ? 'opacity-40 scale-95' : ''}
 	                transition-all duration-200 group
 	                flex items-center justify-center
 	            `}
-	            style={{ minHeight: '40px', ...gridPositionStyle }}
+	            style={{ minHeight: '40px', borderRadius, ...gridPositionStyle }}
 	        >
 	             <div className={`text-gray-300 flex flex-col items-center gap-1 ${isSelected || isDragTarget ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
 	                 <MoveVertical size={20} />
@@ -172,6 +265,90 @@ const Block: React.FC<BlockProps> = ({
 	        </motion.div>
 	      );
 	  }
+
+  // Social Icon Block (small, icon-only)
+  if (block.type === BlockType.SOCIAL_ICON) {
+    const platform = block.socialPlatform;
+    const handle = block.socialHandle || '';
+    const option = platform ? getSocialPlatformOption(platform) : undefined;
+    const BrandIcon = option?.brandIcon;
+    const FallbackIcon = option?.icon;
+    const brandColor = option?.brandColor;
+    const url = option && handle ? option.buildUrl(handle) : '';
+
+    // Determine if we should show colored or grey/black icon
+    // Use brand color by default, but respect textColor if explicitly set
+    const useColor = !block.textColor || block.textColor === 'text-brand';
+    const iconColor = useColor
+      ? brandColor
+      : block.textColor === 'text-black'
+        ? '#000000'
+        : block.textColor === 'text-gray-700'
+          ? '#374151'
+          : undefined;
+
+    return (
+      <motion.a
+        layoutId={block.id}
+        layout
+        href={url || undefined}
+        target="_blank"
+        rel="noopener noreferrer"
+        draggable={!isResizing}
+        onDragStart={(e) => {
+          if (isResizing) {
+            e.preventDefault();
+            return;
+          }
+          if ((e.target as HTMLElement)?.closest('[data-resize-handle="true"]')) {
+            e.preventDefault();
+            return;
+          }
+          onDragStart(block.id);
+        }}
+        onDragEnter={() => onDragEnter(block.id)}
+        onDragOver={(e) => e.preventDefault()}
+        onDragEnd={onDragEnd}
+        onDrop={(e) => { e.preventDefault(); onDrop(block.id); }}
+        onClick={(e) => {
+          if (e.ctrlKey || e.metaKey) return; // Allow link click
+          e.preventDefault();
+          onEdit(block);
+        }}
+        data-block-id={block.id}
+        className={`
+          relative cursor-pointer overflow-hidden
+          ${block.color || 'bg-white'}
+          ${isSelected ? 'ring-2 ring-violet-500 shadow-lg' : 'hover:ring-2 hover:ring-gray-300 hover:shadow-md'}
+          ${isDragTarget ? 'ring-2 ring-violet-500 bg-violet-50/50 scale-105' : ''}
+          ${isDragging ? 'opacity-40 scale-95' : ''}
+          transition-all duration-200 group
+          flex items-center justify-center
+          shadow-sm border border-gray-100
+        `}
+        style={{
+          ...gridPositionStyle,
+          borderRadius,
+          ...(block.customBackground ? { background: block.customBackground } : {}),
+        }}
+      >
+        {BrandIcon ? (
+          <BrandIcon
+            size={24}
+            style={{ color: iconColor }}
+            className="group-hover:scale-110 transition-transform"
+          />
+        ) : FallbackIcon ? (
+          <FallbackIcon
+            size={24}
+            style={{ color: iconColor || '#374151' }}
+            className="group-hover:scale-110 transition-transform"
+          />
+        ) : null}
+        {resizeHandle}
+      </motion.a>
+    );
+  }
 
   // YouTube Block Detection
   const activeVideos = fetchedVideos.length > 0 ? fetchedVideos : [];
@@ -225,22 +402,33 @@ const Block: React.FC<BlockProps> = ({
     };
 
 	    return (
-	      <motion.div 
-	        layoutId={block.id}
-	        layout
-	        draggable={!isResizing}
-	        onDragStart={() => onDragStart(block.id)}
-	        onDragEnter={() => onDragEnter(block.id)}
-	        onDragOver={(e) => e.preventDefault()}
-	        onDragEnd={onDragEnd}
-	        onDrop={(e) => { e.preventDefault(); onDrop(block.id); }}
+      <motion.div 
+        layoutId={block.id}
+        layout
+        draggable={!isResizing}
+        onDragStart={(e) => {
+          if (isResizing) {
+            e.preventDefault();
+            return;
+          }
+          if ((e.target as HTMLElement)?.closest('[data-resize-handle="true"]')) {
+            e.preventDefault();
+            return;
+          }
+          onDragStart(block.id);
+        }}
+        onDragEnter={() => onDragEnter(block.id)}
+        onDragOver={(e) => e.preventDefault()}
+        onDragEnd={onDragEnd}
+        onDrop={(e) => { e.preventDefault(); onDrop(block.id); }}
         onClick={() => onEdit(block)}
+        data-block-id={block.id}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         whileHover={{ y: -4, transition: { duration: 0.2 } }}
-        style={gridPositionStyle}
-        className={`group relative rounded-[2rem] overflow-hidden bg-white ${colClass} ${rowClass} cursor-pointer
-          ${isSelected ? 'ring-4 ring-blue-500 shadow-xl z-20' : 'ring-1 ring-black/5'} 
+        style={{ ...gridPositionStyle, borderRadius }}
+        className={`group relative overflow-hidden bg-white ${colClass} ${rowClass} cursor-pointer
+          ${isSelected ? 'ring-4 ring-blue-500 shadow-xl z-20' : 'ring-1 ring-black/5'}
           ${!isSelected ? 'shadow-sm hover:shadow-xl' : ''}
           ${isDragTarget ? 'ring-2 ring-violet-500 z-20 scale-[1.02]' : ''}
           ${isDragging ? 'opacity-40 scale-95' : ''}
@@ -335,18 +523,29 @@ const Block: React.FC<BlockProps> = ({
       layoutId={block.id}
       layout
       draggable={!isResizing}
-      onDragStart={() => onDragStart(block.id)}
+      onDragStart={(e) => {
+        if (isResizing) {
+          e.preventDefault();
+          return;
+        }
+        if ((e.target as HTMLElement)?.closest('[data-resize-handle="true"]')) {
+          e.preventDefault();
+          return;
+        }
+        onDragStart(block.id);
+      }}
       onDragEnter={() => onDragEnter(block.id)}
       onDragOver={(e) => e.preventDefault()}
       onDragEnd={onDragEnd}
       onDrop={(e) => { e.preventDefault(); onDrop(block.id); }}
       onClick={() => onEdit(block)}
+      data-block-id={block.id}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      style={{ ...finalStyle, ...gridPositionStyle }}
-      className={`group relative rounded-[2rem] overflow-hidden ${!block.customBackground && !isLinkWithImage && !isRichYoutube ? (block.color || 'bg-white') : ''} ${block.textColor || 'text-gray-900'} ${colClass} ${rowClass} cursor-pointer
-        ${isSelected ? 'ring-4 ring-blue-500 shadow-xl z-20' : 'ring-1 ring-black/5'} 
+      style={{ ...finalStyle, ...gridPositionStyle, borderRadius }}
+      className={`group relative overflow-hidden ${!block.customBackground && !isLinkWithImage && !isRichYoutube ? (block.color || 'bg-white') : ''} ${block.textColor || 'text-gray-900'} ${colClass} ${rowClass} cursor-pointer
+        ${isSelected ? 'ring-4 ring-blue-500 shadow-xl z-20' : 'ring-1 ring-black/5'}
         ${!isSelected ? 'shadow-sm hover:shadow-xl' : ''}
         ${isDragTarget ? 'ring-2 ring-violet-500 z-20 scale-[1.02]' : ''}
         ${isDragging ? 'opacity-40 scale-95' : ''}
@@ -418,10 +617,11 @@ const Block: React.FC<BlockProps> = ({
           /* DEFAULT BLOCK (Link, Social, Text) */
           <div className="p-6 h-full flex flex-col justify-between relative">
             <div className="flex justify-between items-start">
-               {block.type !== BlockType.TEXT && (
+               {/* Only show icon for SOCIAL blocks, not LINK or TEXT */}
+               {block.type === BlockType.SOCIAL && (
                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-sm ${
-                   block.textColor === 'text-white' || isLinkWithImage 
-                     ? 'bg-white/20 text-white backdrop-blur-md' 
+                   block.textColor === 'text-white' || isLinkWithImage
+                     ? 'bg-white/20 text-white backdrop-blur-md'
                      : 'bg-white/90 shadow-md'
                  }`}>
                    {getIcon()}
@@ -437,10 +637,72 @@ const Block: React.FC<BlockProps> = ({
             </div>
 
             <div className={`${block.type === BlockType.TEXT ? 'flex flex-col justify-center h-full' : 'mt-auto'} ${isLinkWithImage ? 'bg-black/40 -mx-6 -mb-6 p-5 backdrop-blur-sm' : ''}`}>
-              <h3 className={`font-bold leading-tight tracking-tight ${block.type === BlockType.TEXT ? 'text-2xl mb-2' : 'text-lg'} ${isLinkWithImage ? 'text-white' : ''}`}>
-                {block.channelTitle || block.title}
-              </h3>
-              {block.subtext && <p className={`text-sm mt-1 font-medium ${isLinkWithImage ? 'text-white/70' : 'opacity-60'}`}>{block.subtext}</p>}
+              {/* Editable Title */}
+              <div className="group/title relative">
+                {isEditingTitle ? (
+                  <input
+                    ref={titleInputRef}
+                    type="text"
+                    value={editTitleValue}
+                    onChange={(e) => setEditTitleValue(e.target.value)}
+                    onBlur={handleTitleSave}
+                    onKeyDown={handleTitleKeyDown}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`font-bold leading-tight tracking-tight bg-transparent border-b-2 border-violet-500 outline-none w-full pointer-events-auto ${block.type === BlockType.TEXT ? 'text-2xl mb-2' : 'text-lg'} ${isLinkWithImage ? 'text-white' : ''}`}
+                    placeholder="Title..."
+                  />
+                ) : (
+                  <h3
+                    className={`font-bold leading-tight tracking-tight cursor-text ${block.type === BlockType.TEXT ? 'text-2xl mb-2' : 'text-lg'} ${isLinkWithImage ? 'text-white' : ''}`}
+                    onClick={(e) => {
+                      if (onInlineUpdate) {
+                        e.stopPropagation();
+                        setIsEditingTitle(true);
+                      }
+                    }}
+                  >
+                    {block.channelTitle || block.title || <span className="opacity-40 italic">Add title...</span>}
+                    {onInlineUpdate && !block.channelTitle && (
+                      <Pencil size={12} className="inline-block ml-2 opacity-0 group-hover/title:opacity-50 transition-opacity" />
+                    )}
+                  </h3>
+                )}
+              </div>
+
+              {/* Editable Subtext */}
+              <div className="group/subtext relative">
+                {isEditingSubtext ? (
+                  <input
+                    ref={subtextInputRef}
+                    type="text"
+                    value={editSubtextValue}
+                    onChange={(e) => setEditSubtextValue(e.target.value)}
+                    onBlur={handleSubtextSave}
+                    onKeyDown={handleSubtextKeyDown}
+                    onClick={(e) => e.stopPropagation()}
+                    className={`text-sm font-medium bg-transparent border-b-2 border-violet-500 outline-none w-full pointer-events-auto mt-1 ${isLinkWithImage ? 'text-white/70' : 'opacity-60'}`}
+                    placeholder="Subtitle..."
+                  />
+                ) : (
+                  (block.subtext || onInlineUpdate) && (
+                    <p
+                      className={`text-sm mt-1 font-medium cursor-text ${isLinkWithImage ? 'text-white/70' : 'opacity-60'}`}
+                      onClick={(e) => {
+                        if (onInlineUpdate) {
+                          e.stopPropagation();
+                          setIsEditingSubtext(true);
+                        }
+                      }}
+                    >
+                      {block.subtext || <span className="opacity-40 italic text-xs">Add subtitle...</span>}
+                      {onInlineUpdate && (
+                        <Pencil size={10} className="inline-block ml-1.5 opacity-0 group-hover/subtext:opacity-50 transition-opacity" />
+                      )}
+                    </p>
+                  )
+                )}
+              </div>
+
               {block.type === BlockType.TEXT && block.content && (
                   <p className="opacity-70 mt-2 whitespace-pre-wrap leading-relaxed">{block.content}</p>
               )}
