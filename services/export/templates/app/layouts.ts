@@ -110,4 +110,3 @@ export const generateBackgroundBlur = (
   }
   return '';
 };
-

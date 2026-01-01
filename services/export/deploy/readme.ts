@@ -75,4 +75,3 @@ ${
 - \`src/index.css\` - Tailwind styles
 - \`public/assets/\` - Images (if any)
 `;
-

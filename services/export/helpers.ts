@@ -35,4 +35,3 @@ export const escapeHtml = (value: string | undefined | null): string => {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 };
-

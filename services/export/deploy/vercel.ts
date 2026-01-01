@@ -8,4 +8,3 @@ export const VERCEL_JSON = `{
   "installCommand": "npm install"
 }
 `;
-

@@ -36,4 +36,3 @@ export const generatePackageJson = (name: string): string => {
     2
   );
 };
-

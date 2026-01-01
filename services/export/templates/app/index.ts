@@ -30,8 +30,7 @@ export const generateAppTsx = (data: SiteData, imageMap: ImageMap): string => {
   };
   const avatarRadius =
     avatarStyle.shape === 'circle' ? '9999px' : avatarStyle.shape === 'square' ? '0' : '1.5rem';
-  const avatarShadow =
-    avatarStyle.shadow !== false ? '0 25px 50px -12px rgba(0,0,0,0.15)' : 'none';
+  const avatarShadow = avatarStyle.shadow !== false ? '0 25px 50px -12px rgba(0,0,0,0.15)' : 'none';
   const avatarBorder =
     avatarStyle.border !== false
       ? `${avatarStyle.borderWidth || 4}px solid ${avatarStyle.borderColor || '#ffffff'}`
@@ -114,4 +113,3 @@ ${generateFooter(layoutParams.showBranding)}
 }
 `;
 };
-

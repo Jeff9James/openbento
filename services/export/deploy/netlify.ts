@@ -11,4 +11,3 @@ export const NETLIFY_TOML = `[build]
   to = "/index.html"
   status = 200
 `;
-

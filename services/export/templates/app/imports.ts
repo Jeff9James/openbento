@@ -2,7 +2,8 @@
  * Generate import statements for the exported App.tsx
  */
 
-export const generateImports = (): string => `import { useState, useEffect, useRef, useCallback } from 'react'
+export const generateImports =
+  (): string => `import { useState, useEffect, useRef, useCallback } from 'react'
 import { Youtube, Play, Loader2 } from 'lucide-react'
 import {
   SiX, SiInstagram, SiTiktok, SiYoutube, SiGithub, SiGitlab, SiLinkedin,
@@ -14,4 +15,3 @@ import { Globe, Link as LinkIcon } from 'lucide-react'
 import type { IconType } from 'react-icons'
 import type { LucideIcon } from 'lucide-react'
 `;
-

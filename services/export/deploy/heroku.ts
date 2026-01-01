@@ -10,4 +10,3 @@ export const HEROKU_STATIC_JSON = `{
   }
 }
 `;
-

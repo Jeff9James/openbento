@@ -33,4 +33,3 @@ export const DOCKERIGNORE = `.git
 node_modules
 dist
 `;
-

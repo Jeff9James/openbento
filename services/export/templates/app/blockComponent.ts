@@ -176,4 +176,3 @@ const Block = ({ block }: { block: BlockData }) => {
   )
 }
 `;
-

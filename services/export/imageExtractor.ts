@@ -14,10 +14,7 @@ export interface ImageMap {
  * Extract all base64 images from SiteData and add them to a zip folder
  * Returns a mapping from image keys to their new paths
  */
-export function extractImages(
-  data: SiteData,
-  assetsFolder: JSZip | null
-): ImageMap {
+export function extractImages(data: SiteData, assetsFolder: JSZip | null): ImageMap {
   const imageMap: ImageMap = {};
 
   // Extract avatar if it's a base64 image
@@ -43,4 +40,3 @@ export function extractImages(
 
   return imageMap;
 }
-

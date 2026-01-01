@@ -10,4 +10,3 @@ export { NGINX_CONF, DOCKERFILE, DOCKERIGNORE } from './docker';
 export { getVpsNginxConf } from './vps';
 export { HEROKU_STATIC_JSON } from './heroku';
 export { generateDeployMd } from './readme';
-

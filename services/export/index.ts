@@ -107,4 +107,3 @@ export const generatePreviewSrcDoc = (_data: SiteData, _opts?: { siteId?: string
   // Return empty - will be removed when PreviewPage is refactored
   return '';
 };
-

@@ -52,4 +52,3 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 `;
-

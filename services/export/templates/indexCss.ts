@@ -50,4 +50,3 @@ export const generateIndexCSS = (): string => `@tailwind base;
   scrollbar-width: none;
 }
 `;
-

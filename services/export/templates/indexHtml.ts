@@ -18,4 +18,3 @@ export const generateIndexHtml = (title: string): string => `<!DOCTYPE html>
   </body>
 </html>
 `;
-

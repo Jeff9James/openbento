@@ -27,4 +27,3 @@ export const generateTSConfig = (): string =>
     null,
     2
   );
-

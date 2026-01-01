@@ -41,4 +41,3 @@ interface BlockData {
   zIndex?: number
 }
 `;
-

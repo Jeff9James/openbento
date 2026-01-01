@@ -564,7 +564,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                               type="text"
                               value={(profile.backgroundColor || '#F7F7F7').replace('#', '')}
                               onChange={(e) => {
-                                let val = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
+                                const val = e.target.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 6);
                                 if (val.length >= 3) {
                                   setProfile({
                                     ...profile,

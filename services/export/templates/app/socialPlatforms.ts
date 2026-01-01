@@ -34,4 +34,3 @@ const SOCIAL_PLATFORMS: Record<string, { icon: IconType | LucideIcon; brandColor
   custom: { icon: LinkIcon, brandColor: '#6B7280', buildUrl: (h) => h },
 }
 `;
-
