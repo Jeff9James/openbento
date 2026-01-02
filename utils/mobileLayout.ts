@@ -3,7 +3,7 @@ import { BlockData } from '../types';
 
 /**
  * Calculates the mobile grid layout for a block based on its desktop dimensions.
- * 
+ *
  * Rules:
  * - Desktop colSpan 1-4 → Mobile 1 column (50% width)
  * - Desktop colSpan 5-9 → Mobile 2 columns (100% width)
@@ -12,15 +12,14 @@ import { BlockData } from '../types';
 export const getMobileLayout = (block: BlockData): { colSpan: number; rowSpan: number } => {
   // Large blocks (more than half of 9-col grid) → full width
   const mobileColSpan = block.colSpan >= 5 ? 2 : 1;
-  
+
   // Medium blocks that become narrow need more height
-  const mobileRowSpan = block.colSpan >= 3 && block.colSpan < 5 
-    ? Math.max(block.rowSpan, 2) 
-    : block.rowSpan;
+  const mobileRowSpan =
+    block.colSpan >= 3 && block.colSpan < 5 ? Math.max(block.rowSpan, 2) : block.rowSpan;
 
   return {
     colSpan: mobileColSpan,
-    rowSpan: mobileRowSpan
+    rowSpan: mobileRowSpan,
   };
 };
 
@@ -32,4 +31,3 @@ export const MOBILE_GRID_CONFIG = {
   rowHeight: 80, // px per row
   gap: 12, // px between items
 } as const;
-

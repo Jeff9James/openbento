@@ -238,20 +238,20 @@ const PreviewPage: React.FC = () => {
           <div className="p-4">
             <div
               className="grid pb-8"
-              style={{ 
-                gridTemplateColumns: `repeat(${MOBILE_GRID_CONFIG.columns}, 1fr)`, 
+              style={{
+                gridTemplateColumns: `repeat(${MOBILE_GRID_CONFIG.columns}, 1fr)`,
                 gridAutoRows: `${MOBILE_GRID_CONFIG.rowHeight}px`,
-                gap: `${MOBILE_GRID_CONFIG.gap}px`
+                gap: `${MOBILE_GRID_CONFIG.gap}px`,
               }}
             >
               {sortedBlocks.map((block) => {
                 const mobileLayout = getMobileLayout(block);
                 return (
-                  <div 
-                    key={block.id} 
-                    style={{ 
+                  <div
+                    key={block.id}
+                    style={{
                       gridColumn: `span ${mobileLayout.colSpan}`,
-                      gridRow: `span ${mobileLayout.rowSpan}` 
+                      gridRow: `span ${mobileLayout.rowSpan}`,
                     }}
                   >
                     <Block
