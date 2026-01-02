@@ -35,6 +35,7 @@ export type SocialPlatform =
   | 'discord'
   | 'telegram'
   | 'whatsapp'
+  | 'spotify'
   | 'custom';
 
 // Configured social account in settings
