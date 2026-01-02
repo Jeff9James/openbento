@@ -78,7 +78,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: ${{ env.REGISTRY_IMAGE }}
-          short-description: "A beautiful, open-source bento grid generator for creating stunning link-in-bio pages"
+          short-description: 'A beautiful, open-source bento grid generator for creating stunning link-in-bio pages'
           readme-filepath: ./README.md
         continue-on-error: true
-
