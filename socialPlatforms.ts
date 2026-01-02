@@ -54,6 +54,7 @@ import {
   SiDiscord,
   SiTelegram,
   SiWhatsapp,
+  SiSpotify,
 } from 'react-icons/si';
 import type { IconType } from 'react-icons';
 
@@ -277,6 +278,18 @@ export const SOCIAL_PLATFORM_OPTIONS: SocialPlatformOption[] = [
     formatHandleForDisplay: (h) => normalizeHandle(h),
   },
   {
+    id: 'spotify',
+    label: 'Spotify',
+    icon: SiSpotify,
+    brandIcon: SiSpotify,
+    brandColor: '#1DB954',
+    placeholder: 'spotify username',
+    kind: 'handle',
+    buildUrl: (input) =>
+      `https://open.spotify.com/user/${encodeURIComponent(normalizeHandle(input))}`,
+    formatHandleForDisplay: (h) => normalizeHandle(h),
+  },
+  {
     id: 'mastodon',
     label: 'Mastodon',
     icon: Rss,
@@ -453,6 +466,7 @@ export const inferSocialPlatformFromUrl = (url: string | undefined): SocialPlatf
   if (value.includes('discord.gg/') || value.includes('discord.com/')) return 'discord';
   if (value.includes('t.me/') || value.includes('telegram.')) return 'telegram';
   if (value.includes('wa.me/') || value.includes('whatsapp.com/')) return 'whatsapp';
+  if (value.includes('open.spotify.com/') || value.includes('spotify.com/')) return 'spotify';
   return undefined;
 };
 
