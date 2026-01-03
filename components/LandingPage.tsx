@@ -120,7 +120,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             </div>
             <div className="flex items-center gap-3">
               <a
-                href="/doc"
+                href={`${import.meta.env.BASE_URL}doc`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-gray-600 hover:text-black hover:bg-gray-100 transition-all"
@@ -710,7 +710,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             </div>
             <div className="flex items-center gap-6 text-sm text-gray-500">
               <a
-                href="/doc"
+                href={`${import.meta.env.BASE_URL}doc`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-black transition-colors flex items-center gap-2"

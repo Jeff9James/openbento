@@ -59,7 +59,7 @@ const DocsPage: React.FC = () => {
           {/* Logo section - aligned with sidebar */}
           <div className="w-64 flex-shrink-0 px-4 py-3 hidden lg:flex items-center gap-3">
             <a
-              href="/"
+              href={import.meta.env.BASE_URL || '/'}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 hover:opacity-80 transition-opacity"
@@ -82,7 +82,7 @@ const DocsPage: React.FC = () => {
               <Menu size={20} />
             </button>
             <a
-              href="/"
+              href={import.meta.env.BASE_URL || '/'}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
