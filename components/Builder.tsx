@@ -1265,8 +1265,10 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
             <div className="bg-white px-2 py-2 rounded-2xl shadow-sm border border-gray-200 flex gap-2 items-center pointer-events-auto select-none">
               {onBack && (
                 <button
+                  type="button"
+                  aria-label="Back to home"
                   onClick={onBack}
-                  className="w-9 h-9 bg-gray-900 text-white rounded-xl flex items-center justify-center hover:bg-black transition-colors shadow-sm"
+                  className="w-9 h-9 bg-gray-900 text-white rounded-xl flex items-center justify-center hover:bg-black transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   title="Back to Home"
                 >
                   <Home size={16} />
@@ -1285,14 +1287,20 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
               <div className="h-6 w-px bg-gray-200 mx-1"></div>
               <div className="flex bg-gray-100/80 p-1 rounded-xl gap-0.5">
                 <button
+                  type="button"
+                  aria-label="Desktop view"
+                  aria-pressed={viewMode === 'desktop'}
                   onClick={() => setViewMode('desktop')}
-                  className={`p-2 rounded-lg transition-all ${viewMode === 'desktop' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+                  className={`p-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${viewMode === 'desktop' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                   <Monitor size={16} />
                 </button>
                 <button
+                  type="button"
+                  aria-label="Mobile view"
+                  aria-pressed={viewMode === 'mobile'}
                   onClick={() => setViewMode('mobile')}
-                  className={`p-2 rounded-lg transition-all ${viewMode === 'mobile' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+                  className={`p-2 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${viewMode === 'mobile' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
                 >
                   <Smartphone size={16} />
                 </button>
@@ -1302,16 +1310,20 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
             {/* Actions Pill */}
             <div className="flex gap-2 pointer-events-auto">
               <button
+                type="button"
+                aria-label={isSidebarOpen ? 'Switch to preview mode' : 'Switch to edit mode'}
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="bg-white px-3.5 py-2 rounded-lg shadow-sm border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                className="bg-white px-3.5 py-2 rounded-lg shadow-sm border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {isSidebarOpen ? <Eye size={16} /> : <Layout size={16} />}
                 <span className="hidden sm:inline">{isSidebarOpen ? 'Preview' : 'Edit'}</span>
               </button>
 
               <button
+                type="button"
+                aria-label="Open settings"
                 onClick={() => setShowSettingsModal(true)}
-                className="bg-white px-3.5 py-2 rounded-lg shadow-sm border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                className="bg-white px-3.5 py-2 rounded-lg shadow-sm border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 title="Open settings"
               >
                 <Settings size={16} />
@@ -1320,11 +1332,13 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
 
               {import.meta.env.DEV && (
                 <button
+                  type="button"
+                  aria-label="Open preview page in new tab"
                   onClick={() => {
                     const previewPath = `${import.meta.env.BASE_URL}preview`;
                     window.open(previewPath, '_blank', 'noopener,noreferrer');
                   }}
-                  className="bg-white px-3.5 py-2 rounded-lg shadow-sm border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  className="bg-white px-3.5 py-2 rounded-lg shadow-sm border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   title="Open preview page"
                 >
                   <Globe size={16} />
@@ -1335,7 +1349,8 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
               {(import.meta.env.DEV || profile?.analytics?.enabled) && (
                 <a
                   href="/analytics"
-                  className="bg-white px-3.5 py-2 rounded-lg shadow-sm border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  aria-label="View analytics dashboard"
+                  className="bg-white px-3.5 py-2 rounded-lg shadow-sm border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   title="View analytics dashboard"
                 >
                   <BarChart3 size={16} />
@@ -1346,20 +1361,24 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
               {/* JSON Import/Export */}
               <div className="flex items-center gap-1 border-r border-gray-200 pr-3 mr-1">
                 <button
+                  type="button"
+                  aria-label="Export as JSON"
                   onClick={handleExportJSON}
-                  className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                   title="Export as JSON"
                 >
                   <FileDown size={16} />
                 </button>
                 <label
-                  className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer"
+                  aria-label="Import JSON file"
+                  className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer focus-within:ring-2 focus-within:ring-blue-500"
                   title="Import JSON"
                 >
                   <Upload size={16} />
                   <input
                     type="file"
                     accept=".json,application/json"
+                    aria-label="Import JSON file"
                     onChange={handleImportJSON}
                     className="hidden"
                   />
@@ -1367,8 +1386,10 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
               </div>
 
               <button
+                type="button"
+                aria-label="Deploy project"
                 onClick={handleExport}
-                className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-black transition-colors text-xs font-semibold flex items-center gap-2"
+                className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-black transition-colors text-xs font-semibold flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <Download size={16} />
                 <span className="hidden sm:inline">Deploy</span>
@@ -1408,22 +1429,26 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                     {/* Upload/Change image button */}
                     <button
+                      type="button"
+                      aria-label="Change avatar image"
                       onClick={(e) => {
                         e.stopPropagation();
                         avatarInputRef.current?.click();
                       }}
-                      className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+                      className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
                       title="Change image"
                     >
                       <Camera size={22} className="text-white" />
                     </button>
                     {/* Style button */}
                     <button
+                      type="button"
+                      aria-label="Edit avatar style"
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowAvatarStyleModal(true);
                       }}
-                      className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors"
+                      className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white"
                       title="Edit style"
                     >
                       <Palette size={22} className="text-white" />
@@ -1445,6 +1470,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                   <input
                     ref={nameInputRef}
                     type="text"
+                    aria-label="Edit your name"
                     value={tempName}
                     onChange={(e) => setTempName(e.target.value)}
                     onBlur={saveNameEdit}
@@ -1471,6 +1497,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                 {editingField === 'bio' ? (
                   <textarea
                     ref={bioInputRef}
+                    aria-label="Edit your bio"
                     value={tempBio}
                     onChange={(e) => setTempBio(e.target.value)}
                     onBlur={saveBioEdit}
@@ -2223,8 +2250,10 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                   </p>
                 </div>
                 <button
+                  type="button"
+                  aria-label="Close analytics modal"
                   onClick={() => setShowAnalyticsModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                  className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <X size={20} />
                 </button>
@@ -2270,6 +2299,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <input
                       type="text"
+                      aria-label="Supabase project URL"
                       value={profile.analytics?.supabaseUrl || ''}
                       onChange={(e) =>
                         handleSetProfile((prev) => ({
@@ -2286,8 +2316,9 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                     {import.meta.env.DEV && (
                       <button
                         type="button"
+                        aria-label={supabaseSetupOpen ? 'Hide Supabase setup' : 'Show Supabase setup'}
                         onClick={() => setSupabaseSetupOpen((v) => !v)}
-                        className="px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         {supabaseSetupOpen ? 'Hide setup' : 'Setup (Dev)'}
                       </button>
@@ -2299,8 +2330,10 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
+                          aria-label="Use existing Supabase project"
+                          aria-pressed={supabaseSetupMode === 'existing'}
                           onClick={() => setSupabaseSetupMode('existing')}
-                          className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                          className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                             supabaseSetupMode === 'existing'
                               ? 'bg-gray-900 text-white border-gray-900'
                               : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
@@ -2310,8 +2343,10 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                         </button>
                         <button
                           type="button"
+                          aria-label="Create new Supabase project"
+                          aria-pressed={supabaseSetupMode === 'create'}
                           onClick={() => setSupabaseSetupMode('create')}
-                          className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                          className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                             supabaseSetupMode === 'create'
                               ? 'bg-gray-900 text-white border-gray-900'
                               : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
@@ -2328,6 +2363,8 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                               Project ref
                             </label>
                             <input
+                              type="text"
+                              aria-label="Supabase project reference"
                               value={supabaseSetupProjectRef}
                               onChange={(e) => setSupabaseSetupProjectRef(e.target.value)}
                               className="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all"
@@ -2340,6 +2377,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                             </label>
                             <input
                               type="password"
+                              aria-label="Supabase database password"
                               value={supabaseSetupDbPassword}
                               onChange={(e) => setSupabaseSetupDbPassword(e.target.value)}
                               className="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all"
@@ -2354,6 +2392,8 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                               Project name (optional)
                             </label>
                             <input
+                              type="text"
+                              aria-label="Supabase project name"
                               value={supabaseSetupProjectName}
                               onChange={(e) => setSupabaseSetupProjectName(e.target.value)}
                               className="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all"
@@ -2365,6 +2405,8 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                               Region
                             </label>
                             <input
+                              type="text"
+                              aria-label="Supabase region"
                               value={supabaseSetupRegion}
                               onChange={(e) => setSupabaseSetupRegion(e.target.value)}
                               className="w-full bg-white border border-gray-200 rounded-xl p-2.5 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all"
@@ -2389,17 +2431,19 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
+                          aria-label="Setup and verify Supabase project"
                           onClick={runSupabaseSetup}
                           disabled={supabaseSetupRunning}
-                          className="px-3 py-2 rounded-xl bg-gray-900 text-white text-xs font-bold hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed"
+                          className="px-3 py-2 rounded-xl bg-gray-900 text-white text-xs font-bold hover:bg-black disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           {supabaseSetupRunning ? 'Running…' : 'Setup & verify'}
                         </button>
                         <button
                           type="button"
+                          aria-label="Check Supabase project status"
                           onClick={checkSupabaseStatus}
                           disabled={supabaseSetupRunning}
-                          className="px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                          className="px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           Check status
                         </button>
