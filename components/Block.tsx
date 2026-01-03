@@ -383,8 +383,8 @@ const Block: React.FC<BlockProps> = ({
         aria-label="Resize block"
         data-resize-handle="true"
         className={`absolute bottom-2 right-2 z-30 transition-opacity pointer-events-auto ${
-          isResizing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-        }`}
+          isResizing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus:opacity-100'
+        } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg`}
         onPointerDown={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -421,6 +421,16 @@ const Block: React.FC<BlockProps> = ({
   if (block.type === BlockType.SPACER) {
     return (
       <motion.div
+        role="button"
+        tabIndex={0}
+        aria-label={`Edit block ${block.title ?? block.type}`}
+        aria-grabbed={isDragging ? 'true' : 'false'}
+        onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onEdit(block);
+        }
+      }}
         layoutId={block.id}
         layout
         draggable={!isResizing}
@@ -451,6 +461,7 @@ const Block: React.FC<BlockProps> = ({
                 ${isDragging ? 'opacity-40 scale-95' : ''}
 	                transition-all duration-200 group
 	                flex items-center justify-center
+	                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
 	            `}
         style={{ borderRadius, ...gridPositionStyle }}
       >
@@ -488,6 +499,15 @@ const Block: React.FC<BlockProps> = ({
 
     return (
       <motion.a
+        tabIndex={0}
+        aria-label={`Edit block ${block.title ?? block.type}`}
+        aria-grabbed={isDragging ? 'true' : 'false'}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onEdit(block);
+          }
+        }}
         layoutId={block.id}
         layout
         href={url || undefined}
@@ -527,6 +547,7 @@ const Block: React.FC<BlockProps> = ({
           transition-all duration-200 group
           flex items-center justify-center
           shadow-sm border border-gray-100
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
         `}
         style={{
           ...gridPositionStyle,
@@ -553,12 +574,14 @@ const Block: React.FC<BlockProps> = ({
         {/* Delete button - appears on hover (not in preview mode) */}
         {!previewMode && (
           <button
+            type="button"
+            aria-label={`Delete ${block.title ?? 'block'}`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onDelete(block.id);
             }}
-            className="absolute top-1 left-1 p-1 bg-red-500/80 hover:bg-red-600 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity z-20"
+            className="absolute top-1 left-1 p-1 bg-red-500/80 hover:bg-red-600 text-white rounded-md opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity z-20 focus:ring-2 focus:ring-offset-2 focus:ring-red-400 focus:outline-none"
             title="Delete"
           >
             <Trash2 size={12} />
@@ -628,6 +651,15 @@ const Block: React.FC<BlockProps> = ({
 
     return (
       <motion.div
+        tabIndex={0}
+        aria-label={`Edit block ${block.title ?? block.type}`}
+        aria-grabbed={isDragging ? 'true' : 'false'}
+        onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onEdit(block);
+        }
+      }}
         layoutId={block.id}
         layout
         draggable={!isResizing}
@@ -671,6 +703,7 @@ const Block: React.FC<BlockProps> = ({
           ${isDragTarget ? 'ring-2 ring-violet-500 z-20 scale-[1.02]' : ''}
           ${isDragging ? 'opacity-40 scale-95' : ''}
           transition-all duration-300 select-none
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
         `}
       >
         {/* Drop indicator */}
@@ -710,8 +743,9 @@ const Block: React.FC<BlockProps> = ({
                     href={`https://youtube.com/watch?v=${vid.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={`Watch video: ${vid.title}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="relative overflow-hidden group/vid rounded bg-gray-100 block"
+                    className="relative overflow-hidden group/vid rounded bg-gray-100 block focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <img
                       src={vid.thumbnail}
@@ -752,6 +786,15 @@ const Block: React.FC<BlockProps> = ({
 
   return (
     <motion.div
+      tabIndex={0}
+      aria-label={`Edit block ${block.title ?? block.type}`}
+      aria-grabbed={isDragging ? 'true' : 'false'}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onEdit(block);
+        }
+      }}
       layoutId={block.id}
       layout
       draggable={!isResizing}
@@ -809,6 +852,7 @@ const Block: React.FC<BlockProps> = ({
           ${!isSelected && !enableTiltEffect ? 'shadow-sm hover:shadow-xl' : 'shadow-sm'}
           ${isDragTarget ? 'ring-2 ring-violet-500' : ''}
           transition-all duration-300
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
         `}
       >
         {/* Drop indicator */}
@@ -827,12 +871,14 @@ const Block: React.FC<BlockProps> = ({
         {/* Delete button - appears on hover (not in preview mode) */}
         {!previewMode && (
           <button
+            type="button"
+            aria-label={`Delete ${block.title ?? 'block'}`}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onDelete(block.id);
             }}
-            className="absolute top-2 left-2 p-1.5 bg-red-500/80 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-20 backdrop-blur-sm"
+            className="absolute top-2 left-2 p-1.5 bg-red-500/80 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity z-20 backdrop-blur-sm focus:ring-2 focus:ring-offset-2 focus:ring-red-400 focus:outline-none"
             title="Delete block"
           >
             <Trash2 size={14} />
@@ -854,12 +900,14 @@ const Block: React.FC<BlockProps> = ({
             {/* Reposition button - appears on hover */}
             {!isRepositioning && onInlineUpdate && (
               <button
+                type="button"
+                aria-label="Reposition background image"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   setIsRepositioning(true);
                 }}
-                className="absolute top-2 right-2 p-2 bg-black/60 hover:bg-black/80 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-20 backdrop-blur-sm"
+                className="absolute top-2 right-2 p-2 bg-black/60 hover:bg-black/80 text-white rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity z-20 backdrop-blur-sm focus:ring-2 focus:ring-offset-2 focus:ring-white focus:outline-none"
                 title="Reposition image"
               >
                 <Move size={16} />
@@ -880,23 +928,27 @@ const Block: React.FC<BlockProps> = ({
                 </div>
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
                   <button
+                    type="button"
+                    aria-label="Cancel image repositioning"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleCancelMediaPosition();
                     }}
-                    className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                    className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 focus:outline-none"
                     title="Cancel"
                   >
                     <X size={16} />
                   </button>
                   <button
+                    type="button"
+                    aria-label="Save image position"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       handleSaveMediaPosition();
                     }}
-                    className="p-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
+                    className="p-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-green-400 focus:outline-none"
                     title="Save position"
                   >
                     <Check size={16} />
@@ -940,12 +992,14 @@ const Block: React.FC<BlockProps> = ({
               {/* Reposition button - appears on hover */}
               {!isRepositioning && onInlineUpdate && (
                 <button
+                  type="button"
+                  aria-label="Reposition media content"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     setIsRepositioning(true);
                   }}
-                  className="absolute top-2 right-2 p-2 bg-black/60 hover:bg-black/80 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto z-20 backdrop-blur-sm"
+                  className="absolute top-2 right-2 p-2 bg-black/60 hover:bg-black/80 text-white rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity pointer-events-auto z-20 backdrop-blur-sm focus:ring-2 focus:ring-offset-2 focus:ring-white focus:outline-none"
                   title="Reposition media"
                 >
                   <Move size={16} />
@@ -964,23 +1018,27 @@ const Block: React.FC<BlockProps> = ({
                   {/* Save/Cancel buttons */}
                   <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2 pointer-events-auto z-20">
                     <button
+                      type="button"
+                      aria-label="Cancel media repositioning"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         handleCancelMediaPosition();
                       }}
-                      className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                      className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 focus:outline-none"
                       title="Cancel"
                     >
                       <X size={16} />
                     </button>
                     <button
+                      type="button"
+                      aria-label="Save media position"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         handleSaveMediaPosition();
                       }}
-                      className="p-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors"
+                      className="p-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-green-400 focus:outline-none"
                       title="Save position"
                     >
                       <Check size={16} />
@@ -1101,6 +1159,7 @@ const Block: React.FC<BlockProps> = ({
                     <input
                       ref={titleInputRef}
                       type="text"
+                      aria-label={`Edit block title${block.title ? `: ${block.title}` : ''}`}
                       value={editTitleValue}
                       onChange={(e) => setEditTitleValue(e.target.value)}
                       onBlur={handleTitleSave}
@@ -1138,6 +1197,7 @@ const Block: React.FC<BlockProps> = ({
                     <input
                       ref={subtextInputRef}
                       type="text"
+                      aria-label={`Edit block subtitle${block.subtext ? `: ${block.subtext}` : ''}`}
                       value={editSubtextValue}
                       onChange={(e) => setEditSubtextValue(e.target.value)}
                       onBlur={handleSubtextSave}
