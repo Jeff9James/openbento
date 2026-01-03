@@ -2063,8 +2063,8 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
       <SettingsModal
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
-        profile={profile}
-        setProfile={handleSetProfile}
+        profile={siteData.profile}
+        setProfile={(newProfile) => setSiteData({ ...siteData, profile: newProfile })}
         bentoName={activeBento?.name}
         onBentoNameChange={(name) => {
           if (activeBento) {
@@ -2072,7 +2072,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
             renameBento(activeBento.id, name);
           }
         }}
-        blocks={blocks}
+        blocks={siteData.blocks}
         onBlocksChange={handleSetBlocks}
       />
 
