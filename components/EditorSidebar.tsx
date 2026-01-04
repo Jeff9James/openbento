@@ -303,7 +303,10 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
               {editingBlock.type !== BlockType.SPACER &&
                 editingBlock.type !== BlockType.SOCIAL_ICON && (
                   <div>
-                    <label htmlFor="block-title-input" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    <label
+                      htmlFor="block-title-input"
+                      className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"
+                    >
                       Title
                     </label>
                     <input
@@ -321,47 +324,49 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
               {editingBlock.type === BlockType.SOCIAL_ICON && (
                 <div className="space-y-3">
                   <div>
-                    <fieldset>  
+                    <fieldset>
                       <legend className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
                         Platform
                       </legend>
                       <div className="grid grid-cols-4 gap-1.5 max-h-40 overflow-y-auto">
-                      {SOCIAL_PLATFORM_OPTIONS.map((platform) => {
-                        const active = platform.id === editingBlock.socialPlatform;
-                        const BrandIcon = platform.brandIcon;
-                        const FallbackIcon = platform.icon;
-                        return (
-                          <button
-                            key={platform.id}
-                            type="button"
-                            onClick={() =>
-                              updateBlock({ ...editingBlock, socialPlatform: platform.id })
-                            }
-                            className={`p-1.5 rounded-lg border transition-all flex flex-col items-center gap-0.5 ${active ? 'bg-violet-600 text-white border-violet-600 shadow-sm' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
-                            title={platform.label}
-                          >
-                            {BrandIcon ? (
-                              <span style={{ color: active ? '#ffffff' : platform.brandColor }}>
-                                <BrandIcon size={14} />
+                        {SOCIAL_PLATFORM_OPTIONS.map((platform) => {
+                          const active = platform.id === editingBlock.socialPlatform;
+                          const BrandIcon = platform.brandIcon;
+                          const FallbackIcon = platform.icon;
+                          return (
+                            <button
+                              key={platform.id}
+                              type="button"
+                              onClick={() =>
+                                updateBlock({ ...editingBlock, socialPlatform: platform.id })
+                              }
+                              className={`p-1.5 rounded-lg border transition-all flex flex-col items-center gap-0.5 ${active ? 'bg-violet-600 text-white border-violet-600 shadow-sm' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                              title={platform.label}
+                            >
+                              {BrandIcon ? (
+                                <span style={{ color: active ? '#ffffff' : platform.brandColor }}>
+                                  <BrandIcon size={14} />
+                                </span>
+                              ) : (
+                                <span className={active ? 'text-white' : 'text-gray-500'}>
+                                  <FallbackIcon size={14} />
+                                </span>
+                              )}
+                              <span className="text-[8px] font-medium leading-tight truncate w-full text-center">
+                                {platform.label}
                               </span>
-                            ) : (
-                              <span className={active ? 'text-white' : 'text-gray-500'}>
-                                <FallbackIcon size={14} />
-                              </span>
-                            )}
-                            <span className="text-[8px] font-medium leading-tight truncate w-full text-center">
-                              {platform.label}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </fieldset>
-                    
                   </div>
 
                   <div>
-                    <label htmlFor="social-icon-handle-input" className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+                    <label
+                      htmlFor="social-icon-handle-input"
+                      className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1"
+                    >
                       {getSocialPlatformOption(editingBlock.socialPlatform)?.kind === 'url'
                         ? 'URL'
                         : 'Handle'}
@@ -502,40 +507,42 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                   {!isYouTubeActive && (
                     <div className="space-y-4">
                       <div>
-                        <fieldset>  
+                        <fieldset>
                           <legend className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                           Platform
+                            Platform
                           </legend>
                           <div className="grid grid-cols-3 gap-2">
-                          {SOCIAL_PLATFORM_OPTIONS.map((platform) => {
-                            const active = platform.id === resolvedSocialPlatform;
-                            return (
-                              <button
-                                key={platform.id}
-                                type="button"
-                                aria-label={platform.label}
-                                aria-pressed={active}
-                                onClick={() => handleSelectSocialPlatform(platform.id)}
-                                className={`p-3 rounded-2xl border text-left transition-all flex items-center gap-2 ${active ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
-                                title={platform.label}
-                              >
-                                <platform.icon
-                                  size={16}
-                                  className={active ? 'text-white' : 'text-gray-500'}
-                                />
-                                <span className="text-[11px] font-semibold leading-tight truncate">
-                                  {platform.label}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
+                            {SOCIAL_PLATFORM_OPTIONS.map((platform) => {
+                              const active = platform.id === resolvedSocialPlatform;
+                              return (
+                                <button
+                                  key={platform.id}
+                                  type="button"
+                                  aria-label={platform.label}
+                                  aria-pressed={active}
+                                  onClick={() => handleSelectSocialPlatform(platform.id)}
+                                  className={`p-3 rounded-2xl border text-left transition-all flex items-center gap-2 ${active ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                                  title={platform.label}
+                                >
+                                  <platform.icon
+                                    size={16}
+                                    className={active ? 'text-white' : 'text-gray-500'}
+                                  />
+                                  <span className="text-[11px] font-semibold leading-tight truncate">
+                                    {platform.label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </fieldset>
-                        
                       </div>
 
                       <div>
-                        <label htmlFor="social-block-handle-input" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                        <label
+                          htmlFor="social-block-handle-input"
+                          className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"
+                        >
                           {resolvedSocialOption?.kind === 'url' ? 'URL' : 'Username / Handle'}
                         </label>
                         <input
@@ -571,44 +578,43 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                             Icon Color
                           </legend>
                           <div className="flex gap-2">
-                          <button
-                            type="button"
-                            aria-pressed={editingBlock.textColor === 'text-brand'}
-                            onClick={() =>
-                              updateBlock({ ...editingBlock, textColor: 'text-brand' })
-                            }
-                            className={`flex-1 py-2 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
-                              editingBlock.textColor === 'text-brand'
-                                ? 'bg-violet-600 text-white border-violet-600'
-                                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                            }`}
-                          >
-                            <span
-                              className="w-3 h-3 rounded-full"
-                              style={{
-                                background:
-                                  getSocialPlatformOption(editingBlock.socialPlatform)
-                                    ?.brandColor || '#6366f1',
-                              }}
-                            />
-                            Color
-                          </button>
-                          <button
-                            type="button"
-                            aria-pressed={editingBlock.textColor === undefined}
-                            onClick={() => updateBlock({ ...editingBlock, textColor: undefined })}
-                            className={`flex-1 py-2 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
-                              !editingBlock.textColor || editingBlock.textColor === 'text-black'
-                                ? 'bg-gray-800 text-white border-gray-800'
-                                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-                            }`}
-                          >
-                            <span className="w-3 h-3 rounded-full bg-gray-600" />
-                            Default
-                          </button>
-                        </div>
+                            <button
+                              type="button"
+                              aria-pressed={editingBlock.textColor === 'text-brand'}
+                              onClick={() =>
+                                updateBlock({ ...editingBlock, textColor: 'text-brand' })
+                              }
+                              className={`flex-1 py-2 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+                                editingBlock.textColor === 'text-brand'
+                                  ? 'bg-violet-600 text-white border-violet-600'
+                                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                              }`}
+                            >
+                              <span
+                                className="w-3 h-3 rounded-full"
+                                style={{
+                                  background:
+                                    getSocialPlatformOption(editingBlock.socialPlatform)
+                                      ?.brandColor || '#6366f1',
+                                }}
+                              />
+                              Color
+                            </button>
+                            <button
+                              type="button"
+                              aria-pressed={editingBlock.textColor === undefined}
+                              onClick={() => updateBlock({ ...editingBlock, textColor: undefined })}
+                              className={`flex-1 py-2 px-3 rounded-lg border text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+                                !editingBlock.textColor || editingBlock.textColor === 'text-black'
+                                  ? 'bg-gray-800 text-white border-gray-800'
+                                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                              }`}
+                            >
+                              <span className="w-3 h-3 rounded-full bg-gray-600" />
+                              Default
+                            </button>
+                          </div>
                         </fieldset>
-                        
                       </div>
                     </div>
                   )}
@@ -620,7 +626,10 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                 <div className="p-5 bg-red-50 rounded-2xl border border-red-100 space-y-5">
                   {/* A. Channel Config */}
                   <div>
-                    <label htmlFor="youtube-channel-id-input" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex justify-between">
+                    <label
+                      htmlFor="youtube-channel-id-input"
+                      className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 flex justify-between"
+                    >
                       Channel ID
                       <a
                         href="https://commentpicker.com/youtube-channel-id.php"
@@ -727,7 +736,10 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                   {(editingBlock.type === BlockType.MEDIA ||
                     editingBlock.type === BlockType.LINK) && (
                     <div className="mb-4">
-                      <label htmlFor="block-img-upload" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      <label
+                        htmlFor="block-img-upload"
+                        className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"
+                      >
                         Upload Image{' '}
                         {editingBlock.type === BlockType.LINK ? '(Optional Background)' : ''}
                       </label>
@@ -823,42 +835,41 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
 
                 {/* Solid Colors */}
                 <div className="space-y-2">
-                  <fieldset>  
+                  <fieldset>
                     <legend className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
                       Solid Colors
                     </legend>
                     <div className="grid grid-cols-5 gap-3">
-                    {BASE_COLORS.filter((c) => c.type === 'solid').map((c) => {
-                      const active = isSelectedColor(c);
-                      return (
-                        <button
-                          type="button"
-                          aria-label={`Set background color to ${c.name}`}
-                          aria-pressed={active}
-                          key={c.name}
-                          onClick={() =>
-                            updateBlock({
-                              ...editingBlock,
-                              color: c.bg,
-                              textColor: c.text,
-                              customBackground: undefined,
-                            })
-                          }
-                          className={`h-10 rounded-full border shadow-sm transition-all transform active:scale-95 ${c.bg} ${active ? 'ring-2 ring-offset-2 ring-gray-900 scale-110' : 'hover:scale-105'} flex items-center justify-center`}
-                          title={c.name}
-                        >
-                          {active && (
-                            <CheckCircle2
-                              size={16}
-                              className={c.text === 'text-white' ? 'text-white' : 'text-black'}
-                            />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                      {BASE_COLORS.filter((c) => c.type === 'solid').map((c) => {
+                        const active = isSelectedColor(c);
+                        return (
+                          <button
+                            type="button"
+                            aria-label={`Set background color to ${c.name}`}
+                            aria-pressed={active}
+                            key={c.name}
+                            onClick={() =>
+                              updateBlock({
+                                ...editingBlock,
+                                color: c.bg,
+                                textColor: c.text,
+                                customBackground: undefined,
+                              })
+                            }
+                            className={`h-10 rounded-full border shadow-sm transition-all transform active:scale-95 ${c.bg} ${active ? 'ring-2 ring-offset-2 ring-gray-900 scale-110' : 'hover:scale-105'} flex items-center justify-center`}
+                            title={c.name}
+                          >
+                            {active && (
+                              <CheckCircle2
+                                size={16}
+                                className={c.text === 'text-white' ? 'text-white' : 'text-black'}
+                              />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </fieldset>
-                  
                 </div>
               </div>
             )}

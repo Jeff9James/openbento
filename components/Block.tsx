@@ -437,11 +437,11 @@ const Block: React.FC<BlockProps> = ({
         aria-label={`Edit block ${block.title ?? block.type}`}
         aria-grabbed={isDragging ? 'true' : 'false'}
         onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onEdit(block);
-        }
-      }}
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onEdit(block);
+          }
+        }}
         layoutId={block.id}
         layout
         draggable={!isResizing}
@@ -672,11 +672,11 @@ const Block: React.FC<BlockProps> = ({
         aria-label={`Edit block ${block.title ?? block.type}`}
         aria-grabbed={isDragging ? 'true' : 'false'}
         onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onEdit(block);
-        }
-      }}
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onEdit(block);
+          }
+        }}
         layoutId={block.id}
         layout
         draggable={!isResizing}

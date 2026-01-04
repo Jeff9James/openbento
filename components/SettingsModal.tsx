@@ -622,7 +622,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             key={color}
                             type="button"
                             aria-label={`Set background color to ${color}`}
-                            aria-pressed={profile.backgroundColor === color && !profile.backgroundImage}
+                            aria-pressed={
+                              profile.backgroundColor === color && !profile.backgroundImage
+                            }
                             onClick={() =>
                               setProfile({
                                 ...profile,
@@ -658,7 +660,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                           placeholder="https://example.com/image.jpg"
                           className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-violet-500 focus:border-transparent focus:outline-none"
                         />
-                        <label className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-blue-500" aria-label="Upload background image">
+                        <label
+                          className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-blue-500"
+                          aria-label="Upload background image"
+                        >
                           <Upload size={16} className="text-gray-600" />
                           <input
                             type="file"

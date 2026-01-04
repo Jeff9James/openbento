@@ -2453,7 +2453,9 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                     {import.meta.env.DEV && (
                       <button
                         type="button"
-                        aria-label={supabaseSetupOpen ? 'Hide Supabase setup' : 'Show Supabase setup'}
+                        aria-label={
+                          supabaseSetupOpen ? 'Hide Supabase setup' : 'Show Supabase setup'
+                        }
                         onClick={() => setSupabaseSetupOpen((v) => !v)}
                         className="px-3 py-2 rounded-xl bg-white border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
