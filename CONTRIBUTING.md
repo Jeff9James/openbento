@@ -28,14 +28,41 @@ Feature suggestions are welcome! Please open an issue with:
 2. **Install dependencies**: `npm install`
 3. **Make your changes** and ensure the code works
 4. **Test your changes** locally with `npm run dev`
-5. **Commit your changes** with a clear commit message
-6. **Push to your fork** and submit a pull request
+5. **Verify linting and formatting** before committing (see below)
+6. **Commit your changes** with a clear commit message
+7. **Push to your fork** and submit a pull request
+
+### Before Submitting
+
+Make sure your code passes all checks:
+
+```bash
+# Check for linting errors
+npm run lint
+
+# Fix linting errors automatically
+npm run lint:fix
+
+# Check code formatting
+npm run format:check
+
+# Format code automatically
+npm run format
+
+# Check TypeScript types
+npm run type-check
+
+# Run all checks at once (recommended)
+npm run ci
+```
+
+> ⚠️ **Important**: Pull requests that fail linting or formatting checks will not be merged.
 
 ## Development Setup
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/openbento.git
+git clone https://github.com/yoanbernabeu/openbento.git
 cd openbento
 
 # Install dependencies
