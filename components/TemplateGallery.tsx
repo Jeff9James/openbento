@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { BentoTemplate, TemplateCategory, BlockData, UserProfile, SiteData } from '../types';
-import { TEMPLATE_CATEGORIES, getTemplatesByCategory, getTemplateById, allTemplates } from '../templates';
-import { X, Search, Grid, ChevronRight, Layout, Sparkles } from 'lucide-react';
+import { BentoTemplate, TemplateCategory } from '../types';
+import { TEMPLATE_CATEGORIES, allTemplates } from '../templates';
+import { X, Search, Layout, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface TemplateGalleryProps {
