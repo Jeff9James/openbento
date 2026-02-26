@@ -20,6 +20,9 @@ import {
   List,
   Palette,
   CheckCircle2,
+  Navigation,
+  Star,
+  QrCode,
 } from 'lucide-react';
 import {
   buildSocialUrl,
@@ -271,7 +274,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
       role="complementary"
       aria-label="Block editor sidebar"
       className={`fixed right-0 top-0 h-screen w-full md:w-[400px] bg-white z-50 shadow-xl transform transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] flex flex-col border-l border-gray-200
-	        ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
     >
       {/* Header */}
       <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-20">
@@ -802,6 +805,191 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                 </div>
               )}
 
+              {/* MAP_EMBED BLOCK EDITING */}
+              {editingBlock.type === BlockType.MAP_EMBED && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Store Address
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-medium text-gray-600"
+                      value={editingBlock.mapAddress || ''}
+                      onChange={(e) => updateBlock({ ...editingBlock, mapAddress: e.target.value })}
+                      placeholder="123 Main St, City, Country"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1.5">
+                      Enter your business address for directions
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Google Maps Embed URL (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-mono text-xs text-gray-600"
+                      value={editingBlock.mapEmbedUrl || ''}
+                      onChange={(e) => updateBlock({ ...editingBlock, mapEmbedUrl: e.target.value })}
+                      placeholder="https://www.google.com/maps/embed?pb=..."
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1.5">
+                      Get this from Google Maps → Share → Embed a map
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Zoom Level
+                    </label>
+                    <input
+                      type="range"
+                      min="10"
+                      max="20"
+                      value={editingBlock.mapZoom || 15}
+                      onChange={(e) => updateBlock({ ...editingBlock, mapZoom: parseInt(e.target.value) })}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                      <span>Far</span>
+                      <span>Close</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="map-show-directions"
+                      checked={editingBlock.mapShowDirections !== false}
+                      onChange={(e) => updateBlock({ ...editingBlock, mapShowDirections: e.target.checked })}
+                      className="w-4 h-4 text-violet-600 bg-gray-100 border-gray-300 rounded focus:ring-violet-500"
+                    />
+                    <label htmlFor="map-show-directions" className="text-sm font-medium text-gray-700">
+                      Show "Get Directions" button
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* RATING BLOCK EDITING */}
+              {editingBlock.type === BlockType.RATING && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-100">
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      Display your Google Business rating. Enter your rating value and review count manually, 
+                      or paste your Google Place ID to help customers find you.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Rating Value
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-3.5 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-medium text-gray-600"
+                        value={editingBlock.ratingValue || 0}
+                        onChange={(e) => updateBlock({ ...editingBlock, ratingValue: parseFloat(e.target.value) || 0 })}
+                      />
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={16}
+                            className={`${
+                              star <= (editingBlock.ratingValue || 0)
+                                ? 'text-yellow-400 fill-yellow-400'
+                                : 'text-gray-300'
+                            } cursor-pointer`}
+                            onClick={() => updateBlock({ ...editingBlock, ratingValue: star })}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Number of Reviews
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-medium text-gray-600"
+                      value={editingBlock.ratingCount || 0}
+                      onChange={(e) => updateBlock({ ...editingBlock, ratingCount: parseInt(e.target.value) || 0 })}
+                      placeholder="128"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Google Place ID (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-mono text-xs text-gray-600"
+                      value={editingBlock.ratingPlaceId || ''}
+                      onChange={(e) => updateBlock({ ...editingBlock, ratingPlaceId: e.target.value })}
+                      placeholder="ChIJN1t_tDeuEmsRUsoyG83frY4"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1.5">
+                      Find your Place ID at <a href="https://developers.google.com/maps/documentation/places/web-service/place-id" target="_blank" rel="noopener noreferrer" className="text-violet-500 underline">Google Places</a>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* QR_CODE BLOCK EDITING */}
+              {editingBlock.type === BlockType.QR_CODE && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-100 rounded-2xl border border-gray-200">
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      Generate a QR code for your page URL or any link. Visitors can scan to visit your page or link.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      QR Content (URL or Text)
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-mono text-xs text-gray-600"
+                      value={editingBlock.qrContent || ''}
+                      onChange={(e) => updateBlock({ ...editingBlock, qrContent: e.target.value })}
+                      placeholder="https://yourwebsite.com"
+                    />
+                    <p className="text-[10px] text-gray-400 mt-1.5">
+                      Leave empty to use current page URL
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Label Text
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3.5 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-medium text-gray-600"
+                      value={editingBlock.qrLabel || ''}
+                      onChange={(e) => updateBlock({ ...editingBlock, qrLabel: e.target.value })}
+                      placeholder="Scan to visit our website"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="qr-show-download"
+                      checked={editingBlock.qrShowDownload !== false}
+                      onChange={(e) => updateBlock({ ...editingBlock, qrShowDownload: e.target.checked })}
+                      className="w-4 h-4 text-violet-600 bg-gray-100 border-gray-300 rounded focus:ring-violet-500"
+                    />
+                    <label htmlFor="qr-show-download" className="text-sm font-medium text-gray-700">
+                      Show download button
+                    </label>
+                  </div>
+                </div>
+              )}
+
               {(editingBlock.type === BlockType.TEXT ||
                 editingBlock.type === BlockType.LINK ||
                 editingBlock.type === BlockType.SOCIAL) && (
@@ -914,11 +1102,14 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                   { type: BlockType.MEDIA, label: 'Media', icon: ImageIcon, color: 'bg-pink-600' },
                   { type: BlockType.TEXT, label: 'Note', icon: TypeIcon, color: 'bg-emerald-600' },
                   { type: BlockType.MAP, label: 'Map', icon: MapPin, color: 'bg-amber-500' },
+                  { type: BlockType.MAP_EMBED, label: 'Map+', icon: Navigation, color: 'bg-green-600' },
+                  { type: BlockType.RATING, label: 'Rating', icon: Star, color: 'bg-yellow-500' },
+                  { type: BlockType.QR_CODE, label: 'QR Code', icon: QrCode, color: 'bg-gray-800' },
                   {
                     type: BlockType.SPACER,
                     label: 'Spacer',
                     icon: MoveVertical,
-                    color: 'bg-gray-600',
+                    color: 'bg-gray-400',
                   },
                 ].map((btn) => (
                   <button
