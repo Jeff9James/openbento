@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="OpenBento - Create beautiful link-in-bio pages with our easy drag-and-drop builder. Perfect for small businesses." />
     <title>OpenBento - Builder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link
@@ -12,6 +13,21 @@
     <style>
       body {
         font-family: 'Inter', sans-serif;
+        /* High contrast base styles for accessibility */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Enhanced focus states for accessibility */
+      *:focus-visible {
+        outline: 3px solid #6366f1;
+        outline-offset: 2px;
+      }
+
+      /* Larger touch targets for mobile */
+      button, a, input, textarea, select {
+        min-height: 44px;
+        min-width: 44px;
       }
 
       /* Hide scrollbar for cleaner UI in sidebar */
@@ -21,6 +37,16 @@
       .no-scrollbar {
         -ms-overflow-style: none;
         scrollbar-width: none;
+      }
+
+      /* React Tooltip custom styles for high contrast */
+      .react-tooltip {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        padding: 10px 16px !important;
+        border-radius: 10px !important;
+        max-width: 300px !important;
+        z-index: 9999 !important;
       }
     </style>
     <script type="importmap">

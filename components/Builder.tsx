@@ -5,6 +5,7 @@ import EditorSidebar from './EditorSidebar';
 import ProfileDropdown from './ProfileDropdown';
 import SettingsModal from './SettingsModal';
 import ImageCropModal from './ImageCropModal';
+import OnboardingWizard from './OnboardingWizard';
 import { useHistory } from '../hooks/useHistory';
 import { useSaveStatus } from '../hooks/useSaveStatus';
 import AvatarStyleModal from './AvatarStyleModal';
@@ -45,8 +46,12 @@ import {
   Sparkles,
   Save,
   AlertCircle,
+  HelpCircle,
+
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Tooltip } from 'react-tooltip';
+import 'react-tooltip/dist/react-tooltip.css';
 
 interface BuilderProps {
   onBack?: () => void;
@@ -378,6 +383,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [isLoading, setIsLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const {
     state: siteData,
     set: setSiteData,
@@ -471,8 +477,9 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   // Load bento on mount and migrate old grid format if needed
   useEffect(() => {
     const loadBento = async () => {
+      let bento = null;
       try {
-        const bento = await initializeApp();
+        bento = await initializeApp();
         const dataGridVersion = bento.data.gridVersion ?? GRID_VERSION;
         // Migrate blocks from old 3-col grid to new 9-col grid (legacy only)
         const migratedBlocks =
@@ -499,6 +506,15 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
         console.error('Failed to load bento:', e);
       } finally {
         setIsLoading(false);
+        // Check if this is the first visit - show onboarding for new users
+        try {
+          const hasSeenOnboarding = localStorage.getItem("openbento_onboarding_seen");
+          if (!hasSeenOnboarding && bento && bento.data.profile.name === "My Bento") {
+            setShowOnboarding(true);
+          }
+        } catch {
+          // ignore
+        }
       }
     };
     loadBento();
@@ -1584,6 +1600,18 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
               >
                 <Download size={16} />
                 <span className="hidden sm:inline">Deploy</span>
+              </button>
+              {/* Help Button */}
+              <button
+                type="button"
+                aria-label="Show help tutorial"
+                onClick={() => setShowOnboarding(true)}
+                className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                title="Show help tutorial"
+                data-tooltip-id="builder-tooltip"
+                data-tooltip-content="Click for step-by-step help"
+              >
+                <HelpCircle size={20} />
               </button>
             </div>
           </div>
@@ -2795,6 +2823,31 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
             </motion.div>
           </motion.div>
         )}
+
+      {/* Global Tooltip Component */}
+      <Tooltip id="builder-tooltip" className="react-tooltip" />
+
+      {/* Onboarding Wizard */}
+      <OnboardingWizard
+        isOpen={showOnboarding}
+        onClose={() => {
+          setShowOnboarding(false);
+          try {
+            localStorage.setItem("openbento_onboarding_seen", "true");
+          } catch {
+            // ignore
+          }
+        }}
+        profile={profile}
+        onUpdateProfile={handleSetProfile}
+        onComplete={() => {
+          try {
+            localStorage.setItem("openbento_onboarding_seen", "true");
+          } catch {
+            // ignore
+          }
+        }}
+      />
       </AnimatePresence>
     </div>
   );
