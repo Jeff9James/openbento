@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { AuthProvider } from './lib/AuthContext';
 import { COMMON_BLOCK_CSS } from './services/commonStyles';
 
 const styleEl = document.createElement('style');
@@ -16,6 +17,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </React.StrictMode>
 );
