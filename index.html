@@ -2,14 +2,57 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="OpenBento - Create beautiful link-in-bio pages with our easy drag-and-drop builder. Perfect for small businesses." />
-    <title>OpenBento - Builder</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    
+    <!-- Primary Meta Tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="description" content="OpenBento - Create beautiful link-in-bio pages with our easy drag-and-drop builder. Perfect for small businesses, creators, and professionals. Free, open-source, and privacy-focused." />
+    <meta name="keywords" content="link in bio, bento grid, website builder, landing page, linktree alternative, free website builder, drag and drop, small business, creator tools" />
+    <meta name="author" content="OpenBento" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://openbento.app/" />
+    <meta property="og:title" content="OpenBento - Beautiful Link-in-Bio Pages" />
+    <meta property="og:description" content="Create stunning link-in-bio pages with our drag-and-drop bento grid builder. Free, open-source, and privacy-focused." />
+    <meta property="og:image" content="https://openbento.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="OpenBento" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://openbento.app/" />
+    <meta name="twitter:title" content="OpenBento - Beautiful Link-in-Bio Pages" />
+    <meta name="twitter:description" content="Create stunning link-in-bio pages with our drag-and-drop bento grid builder. Free, open-source, and privacy-focused." />
+    <meta name="twitter:image" content="https://openbento.app/og-image.png" />
+    
+    <!-- Additional SEO -->
+    <link rel="canonical" href="https://openbento.app/" />
+    <link rel="alternate" hreflang="en" href="https://openbento.app/" />
+    
+    <!-- PWA Hints (for deployment) -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="OpenBento" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
+    
+    <!-- Fonts -->
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    
+    <title>OpenBento - Create Beautiful Link-in-Bio Pages</title>
+    
     <style>
       body {
         font-family: 'Inter', sans-serif;
@@ -22,6 +65,24 @@
       *:focus-visible {
         outline: 3px solid #6366f1;
         outline-offset: 2px;
+      }
+
+      /* Skip to content link for keyboard navigation */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: #6366f1;
+        color: white;
+        padding: 8px 16px;
+        z-index: 10000;
+        transition: top 0.3s;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      
+      .skip-link:focus {
+        top: 0;
       }
 
       /* Larger touch targets for mobile */
@@ -48,6 +109,17 @@
         max-width: 300px !important;
         z-index: 9999 !important;
       }
+
+      /* Reduced motion for accessibility */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
     </style>
     <script type="importmap">
       {
@@ -56,15 +128,42 @@
           "jszip": "https://esm.sh/jszip@^3.10.1",
           "react/": "https://esm.sh/react@^19.2.3/",
           "react": "https://esm.sh/react@^19.2.3",
-          "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+          "react-dom/": "https://esm.sh/react@^19.2.3/",
           "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
           "framer-motion": "https://esm.sh/framer-motion@^11.0.0"
         }
       }
     </script>
+    
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "OpenBento",
+      "description": "Create beautiful link-in-bio pages with our easy drag-and-drop builder",
+      "url": "https://openbento.app",
+      "applicationCategory": "DesignApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Drag and drop builder",
+        "Multiple block types",
+        "Custom themes",
+        "Responsive design",
+        "Export to React project",
+        "Privacy-focused"
+      ]
+    }
+    </script>
   </head>
   <body class="bg-gray-50 text-gray-900 overflow-x-hidden">
-    <div id="root"></div>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="root" role="main" id="main-content"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
