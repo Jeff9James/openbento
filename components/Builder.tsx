@@ -47,11 +47,16 @@ import {
   Save,
   AlertCircle,
   HelpCircle,
+  LogIn,
 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
 import 'react-tooltip/dist/react-tooltip.css';
+import { useAuth } from '../lib/AuthContext';
+import AuthModal from './AuthModal';
+import ProUpgradeModal from './ProUpgradeModal';
+import AccountSettingsModal from './AccountSettingsModal';
 
 interface BuilderProps {
   onBack?: () => void;
@@ -380,6 +385,10 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const [showAvatarCropModal, setShowAvatarCropModal] = useState(false);
   const [showAvatarStyleModal, setShowAvatarStyleModal] = useState(false);
   const [showAIGeneratorModal, setShowAIGeneratorModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showProUpgradeModal, setShowProUpgradeModal] = useState(false);
+  const [showAccountSettingsModal, setShowAccountSettingsModal] = useState(false);
+  const { isAuthenticated, isPro, user, isConfigured: isAuthConfigured } = useAuth();
   const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [isLoading, setIsLoading] = useState(true);
@@ -1601,6 +1610,36 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                 <Download size={16} />
                 <span className="hidden sm:inline">Deploy</span>
               </button>
+              
+              {/* Auth Button */}
+              {isAuthConfigured && !isAuthenticated && (
+                <button
+                  type="button"
+                  aria-label="Sign in"
+                  onClick={() => setShowAuthModal(true)}
+                  className="bg-white px-3.5 py-2 rounded-lg shadow-sm border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <LogIn size={16} />
+                  <span className="hidden sm:inline">Sign In</span>
+                </button>
+              )}
+              
+              {isAuthenticated && user && (
+                <button
+                  type="button"
+                  aria-label="Account settings"
+                  onClick={() => setShowAccountSettingsModal(true)}
+                  className="flex items-center gap-2 bg-white px-2 py-1.5 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-semibold">
+                    {user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  {isPro && (
+                    <span className="text-xs font-medium text-amber-600">PRO</span>
+                  )}
+                </button>
+              )}
+              
               {/* Help Button */}
               <button
                 type="button"
@@ -2303,6 +2342,26 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
           handleSetProfile(newBento.data.profile);
           handleSetBlocks(newBento.data.blocks);
           setGridVersion(newBento.data.gridVersion ?? GRID_VERSION);
+        }}
+      />
+
+      {/* AUTH MODALS */}
+      {isAuthConfigured && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
+      <ProUpgradeModal
+        isOpen={showProUpgradeModal}
+        onClose={() => setShowProUpgradeModal(false)}
+      />
+      <AccountSettingsModal
+        isOpen={showAccountSettingsModal}
+        onClose={() => setShowAccountSettingsModal(false)}
+        onOpenUpgrade={() => {
+          setShowAccountSettingsModal(false);
+          setShowProUpgradeModal(true);
         }}
       />
 
