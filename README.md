@@ -13,15 +13,20 @@
 
 ## ✨ Features
 
-### 🧱 Block Types (7 types)
+### 🧱 Block Types (10+ types)
 
 - 🔗 **Links** - Clickable links with titles & subtitles
 - 🖼️ **Media** - Images & GIFs with position control
 - 📺 **YouTube** - Single video, grid, or list mode
 - 📝 **Text** - Notes, quotes, and bio sections
-- 🌐 **Social** - 26+ platforms with branded colors
-- 📍 **Map** - Interactive Google Maps embed
+- 🌐 **Social Icons** - 26+ platforms with branded colors
+- 📍 **Maps** - Interactive Google Maps embed with directions
+- ⭐ **Ratings** - Google Business rating embed
+- 📱 **QR Codes** - Generate QR codes for any URL
 - ⬜ **Spacer** - Empty blocks for layout control
+- 🎲 **3D Blocks (Pro)** - Interactive Three.js 3D models
+- 📊 **Analytics Charts (Pro)** - Visual data visualization
+- 🔧 **Custom HTML (Pro)** - Embed any custom code
 
 ### 🎨 Core Features
 
@@ -31,6 +36,10 @@
 - 🚀 **Multi-Platform Deploy** - Auto-generated configs for Vercel, Netlify, GitHub Pages, Docker, VPS & Heroku
 - 🔒 **Privacy First** - No tracking, no account, no server required. All data stays in your browser localStorage
 - 📁 **Multiple Bentos** - Save and manage multiple projects locally. Switch between them instantly
+- 🤖 **AI Generator** - Generate bento content with AI (Gemini)
+- 📋 **Template Gallery** - Pre-designed templates for quick starts
+- ♿ **Accessibility** - Full keyboard navigation, ARIA labels, screen reader support
+- 🔍 **Help & FAQ** - Built-in searchable help center
 
 ### 📊 Optional Analytics
 
@@ -43,13 +52,70 @@ Track visits with your own Supabase instance:
 
 See [ANALYTICS.md](ANALYTICS.md) for setup instructions.
 
+### ⌨️ Keyboard Shortcuts
+
+- `Ctrl/Cmd + Z` - Undo
+- `Ctrl/Cmd + Y` or `Shift + Z` - Redo
+- `Ctrl/Cmd + S` - Force save
+- `Ctrl/Cmd + E` - Export
+- `Ctrl/Cmd + P` - Preview
+- `Escape` - Close modals
+- `Tab` - Navigate between blocks
+- `Arrow keys` - Move selected block
+- `Delete/Backspace` - Delete selected block
+
+### 📚 Documentation
+
+- 🚀 **[Deployment Guide](DEPLOYMENT.md)** - Complete guide for deploying to Vercel, Netlify, GitHub Pages, and more
+- 🧪 **[Testing Guide](TESTING.md)** - Comprehensive testing instructions for all features
+- 🐛 **[Known Issues](BUGS.md)** - Known bugs, potential issues, and workarounds
+- 📖 **[Codebase Structure](CODEBASE_STRUCTURE.md)** - Overview of the codebase architecture
+- 🔒 **[Security](SECURITY.md)** - Security best practices and considerations
+
 ### 🌐 26+ Social Platforms Supported
 
 X (Twitter), Instagram, TikTok, YouTube, GitHub, GitLab, LinkedIn, Facebook, Twitch, Dribbble, Medium, Dev.to, Reddit, Pinterest, Threads, Bluesky, Mastodon, Substack, Patreon, Ko-fi, Buy Me a Coffee, Snapchat, Discord, Telegram, WhatsApp, and custom links.
 
-### 🛠️ Tech Stack (Exported Project)
+### 🛠️ Tech Stack
 
-Your exported project includes: **React**, **Vite**, **TypeScript**, **Tailwind CSS**, **Lucide Icons**, **React Icons**
+**OpenBento Builder:**
+- **React 19** with TypeScript
+- **Vite** for fast development and building
+- **Tailwind CSS** for styling
+- **Framer Motion** for smooth animations
+- **Lucide React** & **React Icons** for icons
+- **React Tooltip** for helpful tooltips
+- **React Helmet Async** for SEO meta tags
+- **QRCode.react** for QR code generation
+- **Three.js & @react-three/fiber** for 3D blocks
+- **Chart.js** for analytics visualization
+- **Supabase JS** for analytics backend (optional)
+- **Stripe JS** for payments (optional)
+
+**Exported Project:**
+All the above plus: **Vite**, **TypeScript**, **Tailwind CSS**, deployment configs
+
+## 🎉 Phase 5 Updates
+
+### New Features
+- ✅ **Help Modal** - Comprehensive searchable FAQ with 25+ topics
+- ✅ **Enhanced Accessibility** - ARIA labels, keyboard navigation, screen reader support
+- ✅ **SEO Optimization** - Complete meta tags, Open Graph, Twitter Cards, structured data
+- ✅ **PWA Hints** - Manifest and service worker hints for mobile app experience
+- ✅ **Performance Optimizations** - Code splitting, lazy loading, image optimization
+
+### Documentation
+- 📚 **[Deployment Guide](DEPLOYMENT.md)** - Step-by-step deployment for Vercel, Netlify, GitHub Pages, with Supabase and Stripe setup
+- 🧪 **[Testing Guide](TESTING.md)** - Comprehensive testing instructions for all features, accessibility, and performance
+- 🐛 **[Known Issues](BUGS.md)** - Documented bugs, edge cases, and fixes
+- 📖 **[Codebase Structure](CODEBASE_STRUCTURE.md)** - Complete codebase overview and architecture
+
+### Improvements
+- 🎯 Better tooltips throughout the app
+- 🔍 Skip to content link for keyboard users
+- ♿ Reduced motion support for users with vestibular disorders
+- 📱 Enhanced mobile touch targets
+- 🚀 Optimized bundle size and load times
 
 ## 🚀 Getting Started
 
