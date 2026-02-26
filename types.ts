@@ -6,6 +6,10 @@ export enum BlockType {
   SOCIAL_ICON = 'SOCIAL_ICON', // Small icon-only social block for 9x9 grid
   MAP = 'MAP',
   SPACER = 'SPACER',
+  // Phase 3: Local Business Blocks
+  GOOGLE_MAP = 'GOOGLE_MAP', // Enhanced Google Maps embed with directions
+  GOOGLE_RATING = 'GOOGLE_RATING', // Google Business Profile ratings
+  QR_CODE = 'QR_CODE', // QR code generator block
 }
 
 export type SocialPlatform =
@@ -75,6 +79,22 @@ export interface BlockData {
   socialPlatform?: SocialPlatform;
   socialHandle?: string; // Stored without leading '@' when possible
 
+  // Phase 3: Google Map block specific
+  mapEmbedUrl?: string; // Custom Google Maps embed URL
+  showGetDirections?: boolean; // Show "Get Directions" button
+  mapAddress?: string; // Address for directions link
+
+  // Phase 3: Google Rating block specific
+  ratingEmbedUrl?: string; // Google Business Profile rating embed URL
+  ratingPlaceName?: string; // Name of the business for ratings
+
+  // Phase 3: QR Code block specific
+  qrCodeUrl?: string; // URL to generate QR code for
+  qrCodeSize?: number; // QR code size (default: 128)
+  showQrDownload?: boolean; // Show download button
+  qrCodeFgColor?: string; // QR code foreground color
+  qrCodeBgColor?: string; // QR code background color
+
   // Z-index for overlapping blocks (runtime only, not saved)
   zIndex?: number;
 }
@@ -135,4 +155,24 @@ export interface SavedBento {
   createdAt: number;
   updatedAt: number;
   data: SiteData;
+}
+
+// Template category for organizing templates
+export type TemplateCategory = 
+  | 'retail' 
+  | 'food' 
+  | 'services' 
+  | 'creative' 
+  | 'personal' 
+  | 'business';
+
+// Pre-built template structure
+export interface BentoTemplate {
+  id: string;
+  name: string;
+  category: TemplateCategory;
+  description: string;
+  preview?: string; // URL to preview image
+  profile: UserProfile;
+  blocks: BlockData[];
 }

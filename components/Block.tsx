@@ -11,10 +11,15 @@ import {
   X,
   Trash2,
   CopyPlus,
+  MapPin,
+  Star,
+  Download,
+  Navigation,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { getSocialPlatformOption, inferSocialPlatformFromUrl } from '../socialPlatforms';
 import { openSafeUrl, isValidYouTubeChannelId, isValidLocationString } from '../utils/security';
+import { QRCodeSVG } from 'qrcode.react';
 
 // Apple TV style 3D tilt effect hook
 const useTiltEffect = (isEnabled: boolean = true) => {
@@ -470,10 +475,10 @@ const Block: React.FC<BlockProps> = ({
                 ${isSelected ? 'ring-2 ring-blue-500/50 bg-blue-50/50' : 'hover:bg-gray-100/50'}
                 ${isDragTarget ? 'ring-2 ring-violet-500 bg-violet-50/50 scale-[1.02]' : ''}
                 ${isDragging ? 'opacity-40 scale-95' : ''}
-	                transition-all duration-200 group
-	                flex items-center justify-center
-	                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-	            `}
+                    transition-all duration-200 group
+                    flex items-center justify-center
+                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                `}
         style={{ borderRadius, ...gridPositionStyle }}
       >
         <div
@@ -1115,6 +1120,147 @@ const Block: React.FC<BlockProps> = ({
                     {block.title}
                   </p>
                 </div>
+              )}
+            </div>
+          ) : block.type === BlockType.GOOGLE_MAP ? (
+            /* GOOGLE MAP EMBED BLOCK - Enhanced with directions */
+            <div className="w-full h-full relative bg-gray-100 overflow-hidden flex flex-col">
+              {/* Map iframe */}
+              <div className="flex-1 relative">
+                {block.mapEmbedUrl ? (
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    className="absolute inset-0 opacity-95"
+                    src={block.mapEmbedUrl}
+                    loading="lazy"
+                    sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                    title={block.title || 'Google Maps'}
+                  ></iframe>
+                ) : block.content ? (
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    className="absolute inset-0 opacity-95 grayscale-[20%] group-hover:grayscale-0 transition-all duration-500"
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(block.content)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                    loading="lazy"
+                    sandbox="allow-scripts allow-same-origin"
+                    title={block.title || 'Google Maps'}
+                  ></iframe>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                    <div className="text-center">
+                      <MapPin size={24} className="mx-auto text-gray-400 mb-2" />
+                      <p className="text-xs text-gray-400">Add an address to show the map</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Get Directions Button */}
+              {block.showGetDirections && (block.content || block.mapAddress) && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(block.mapAddress || block.content || '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute bottom-2 right-2 z-10 bg-white hover:bg-gray-50 text-gray-800 px-3 py-1.5 rounded-lg shadow-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Navigation size={12} />
+                  Get Directions
+                </a>
+              )}
+              {/* Title overlay */}
+              {block.title && (
+                <div className="absolute top-0 left-0 right-0 p-2 md:p-3 bg-gradient-to-b from-black/60 to-transparent">
+                  <p className={`font-semibold text-white drop-shadow ${textSizes.overlayTitle}`}>
+                    {block.title}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : block.type === BlockType.GOOGLE_RATING ? (
+            /* GOOGLE RATING BLOCK - Business ratings display */
+            <div className="w-full h-full relative bg-white overflow-hidden flex flex-col">
+              {block.ratingEmbedUrl ? (
+                <iframe
+                  width="100%"
+                  height="100%"
+                  className="absolute inset-0"
+                  src={block.ratingEmbedUrl}
+                  loading="lazy"
+                  sandbox="allow-scripts allow-same-origin allow-popups"
+                  title={block.ratingPlaceName || 'Google Rating'}
+                ></iframe>
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+                  <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center mb-3">
+                    <Star size={24} className="text-yellow-500 fill-yellow-500" />
+                  </div>
+                  <p className={`font-bold text-gray-900 ${textSizes.titleText}`}>
+                    {block.ratingPlaceName || block.title || 'Google Rating'}
+                  </p>
+                  <p className={`text-gray-500 mt-1 ${textSizes.subtext}`}>
+                    Add your Google Business Profile URL to display ratings
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : block.type === BlockType.QR_CODE ? (
+            /* QR CODE BLOCK - QR code generator */
+            <div data-block-qr={block.id} className="w-full h-full relative bg-white overflow-hidden flex flex-col items-center justify-center p-3">
+              <QRCodeSVG
+                value={block.qrCodeUrl || block.content || 'https://example.com'}
+                size={Math.min(
+                  (block.colSpan === 3 ? 80 : block.colSpan === 2 ? 60 : 48),
+                  (block.rowSpan === 2 ? 100 : block.rowSpan === 3 ? 140 : 80)
+                )}
+                fgColor={block.qrCodeFgColor || '#000000'}
+                bgColor={block.qrCodeBgColor || '#ffffff'}
+                level="M"
+                includeMargin={false}
+              />
+              {block.title && (
+                <p className={`font-semibold text-gray-900 mt-2 ${textSizes.subtext}`}>
+                  {block.title}
+                </p>
+              )}
+              {block.subtext && (
+                <p className={`text-gray-500 mt-0.5 ${textSizes.body}`}>
+                  {block.subtext}
+                </p>
+              )}
+              {/* Download button */}
+              {block.showQrDownload && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Create a canvas from the QR code
+                    const svg = document.querySelector(`[data-block-qr="${block.id}"] svg`) as SVGElement;
+                    if (svg) {
+                      const svgData = new XMLSerializer().serializeToString(svg);
+                      const canvas = document.createElement('canvas');
+                      const ctx = canvas.getContext('2d');
+                      const img = new Image();
+                      const size = block.qrCodeSize || 128;
+                      canvas.width = size;
+                      canvas.height = size;
+                      img.onload = () => {
+                        ctx?.drawImage(img, 0, 0);
+                        const link = document.createElement('a');
+                        link.download = 'qr-code.png';
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                      };
+                      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+                    }
+                  }}
+                  className="mt-2 p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors"
+                >
+                  <Download size={12} />
+                  Download
+                </button>
               )}
             </div>
           ) : isRichYoutube ? (

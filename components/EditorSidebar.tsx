@@ -20,6 +20,9 @@ import {
   List,
   Palette,
   CheckCircle2,
+  Star,
+  QrCode,
+  Navigation,
 } from 'lucide-react';
 import {
   buildSocialUrl,
@@ -271,7 +274,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
       role="complementary"
       aria-label="Block editor sidebar"
       className={`fixed right-0 top-0 h-screen w-full md:w-[400px] bg-white z-50 shadow-xl transform transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] flex flex-col border-l border-gray-200
-	        ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+            ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
     >
       {/* Header */}
       <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-20">
@@ -771,8 +774,12 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
                     {editingBlock.type === BlockType.MEDIA
                       ? 'Media URL / Path'
-                      : editingBlock.type === BlockType.MAP
+                      : editingBlock.type === BlockType.MAP || editingBlock.type === BlockType.GOOGLE_MAP
                         ? 'Address / City'
+                      : editingBlock.type === BlockType.GOOGLE_RATING
+                        ? 'Google Business Profile URL'
+                      : editingBlock.type === BlockType.QR_CODE
+                        ? 'QR Code URL'
                         : 'Destination URL'}
                   </label>
                   <input
@@ -781,17 +788,25 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                     value={
                       editingBlock.type === BlockType.MEDIA
                         ? editingBlock.imageUrl || ''
-                        : editingBlock.content || ''
+                        : editingBlock.type === BlockType.QR_CODE
+                          ? editingBlock.qrCodeUrl || editingBlock.content || ''
+                          : editingBlock.content || ''
                     }
                     onChange={(e) => {
                       if (editingBlock.type === BlockType.MEDIA)
                         updateBlock({ ...editingBlock, imageUrl: e.target.value });
+                      else if (editingBlock.type === BlockType.QR_CODE)
+                        updateBlock({ ...editingBlock, qrCodeUrl: e.target.value, content: e.target.value });
                       else updateBlock({ ...editingBlock, content: e.target.value });
                     }}
                     placeholder={
                       editingBlock.type === BlockType.MEDIA
                         ? '/images/photo.jpg, video.mp4 or URL'
-                        : 'https://...'
+                        : editingBlock.type === BlockType.GOOGLE_RATING
+                          ? 'https://maps.google.com/...?'
+                        : editingBlock.type === BlockType.QR_CODE
+                          ? 'https://yoursite.com'
+                          : 'https://...'
                     }
                   />
                   {editingBlock.type === BlockType.MEDIA && (
@@ -799,12 +814,126 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                       Supports images, GIFs, and videos (.mp4, .webm, .mov)
                     </p>
                   )}
+                  {/* Google Map specific options */}
+                  {(editingBlock.type === BlockType.GOOGLE_MAP || editingBlock.type === BlockType.GOOGLE_RATING) && (
+                    <div className="mt-3 space-y-3">
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                          Custom Embed URL (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-mono text-gray-600 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none"
+                          value={
+                            editingBlock.type === BlockType.GOOGLE_MAP
+                              ? editingBlock.mapEmbedUrl || ''
+                              : editingBlock.ratingEmbedUrl || ''
+                          }
+                          onChange={(e) => {
+                            if (editingBlock.type === BlockType.GOOGLE_MAP)
+                              updateBlock({ ...editingBlock, mapEmbedUrl: e.target.value });
+                            else
+                              updateBlock({ ...editingBlock, ratingEmbedUrl: e.target.value });
+                          }}
+                          placeholder={
+                            editingBlock.type === BlockType.GOOGLE_MAP
+                              ? 'https://www.google.com/maps/embed?...'
+                              : 'https://maps.google.com/maps?q=...&output=embed'
+                          }
+                        />
+                      </div>
+                      {editingBlock.type === BlockType.GOOGLE_MAP && (
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editingBlock.showGetDirections || false}
+                            onChange={(e) =>
+                              updateBlock({ ...editingBlock, showGetDirections: e.target.checked })
+                            }
+                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-xs font-medium text-gray-700">
+                            Show "Get Directions" button
+                          </span>
+                        </label>
+                      )}
+                      {editingBlock.type === BlockType.GOOGLE_RATING && (
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                            Business Name
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium text-gray-600 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none"
+                            value={editingBlock.ratingPlaceName || editingBlock.title || ''}
+                            onChange={(e) =>
+                              updateBlock({
+                                ...editingBlock,
+                                ratingPlaceName: e.target.value,
+                                title: editingBlock.title || e.target.value,
+                              })
+                            }
+                            placeholder="Your Business Name"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* QR Code specific options */}
+                  {editingBlock.type === BlockType.QR_CODE && (
+                    <div className="mt-3 space-y-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editingBlock.showQrDownload || false}
+                          onChange={(e) =>
+                            updateBlock({ ...editingBlock, showQrDownload: e.target.checked })
+                          }
+                          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-xs font-medium text-gray-700">
+                          Show download button
+                        </span>
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                            Foreground
+                          </label>
+                          <input
+                            type="color"
+                            value={editingBlock.qrCodeFgColor || '#000000'}
+                            onChange={(e) =>
+                              updateBlock({ ...editingBlock, qrCodeFgColor: e.target.value })
+                            }
+                            className="w-full h-8 rounded-lg border border-gray-200 cursor-pointer"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                            Background
+                          </label>
+                          <input
+                            type="color"
+                            value={editingBlock.qrCodeBgColor || '#ffffff'}
+                            onChange={(e) =>
+                              updateBlock({ ...editingBlock, qrCodeBgColor: e.target.value })
+                            }
+                            className="w-full h-8 rounded-lg border border-gray-200 cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {(editingBlock.type === BlockType.TEXT ||
                 editingBlock.type === BlockType.LINK ||
-                editingBlock.type === BlockType.SOCIAL) && (
+                editingBlock.type === BlockType.SOCIAL ||
+                editingBlock.type === BlockType.GOOGLE_MAP ||
+                editingBlock.type === BlockType.GOOGLE_RATING ||
+                editingBlock.type === BlockType.QR_CODE) && (
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
                     {editingBlock.type === BlockType.TEXT ? 'Description' : 'Subtitle / Details'}
@@ -919,6 +1048,25 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                     label: 'Spacer',
                     icon: MoveVertical,
                     color: 'bg-gray-600',
+                  },
+                  // Phase 3: New block types
+                  {
+                    type: BlockType.GOOGLE_MAP,
+                    label: 'G-Map',
+                    icon: Navigation,
+                    color: 'bg-green-600',
+                  },
+                  {
+                    type: BlockType.GOOGLE_RATING,
+                    label: 'Rating',
+                    icon: Star,
+                    color: 'bg-yellow-500',
+                  },
+                  {
+                    type: BlockType.QR_CODE,
+                    label: 'QR Code',
+                    icon: QrCode,
+                    color: 'bg-indigo-600',
                   },
                 ].map((btn) => (
                   <button
