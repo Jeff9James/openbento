@@ -1,5 +1,5 @@
 /**
- * Generate the complete App.tsx for the exported project
+ * Generate the complete App.tsx for the exported project with SEO support
  */
 
 import { SiteData } from '../../../../types';
@@ -16,6 +16,7 @@ import {
   generateFooter,
   generateBackgroundBlur,
 } from './layouts';
+import { escapeHtml } from '../../helpers';
 
 export const generateAppTsx = (data: SiteData, imageMap: ImageMap, siteId?: string): string => {
   const { profile, blocks } = data;
@@ -71,8 +72,20 @@ export const generateAppTsx = (data: SiteData, imageMap: ImageMap, siteId?: stri
   // Site ID for analytics (use provided siteId or fallback)
   const analyticsId = data.profile.analytics?.enabled ? siteId || 'default' : '';
 
+  // SEO metadata
+  const title = escapeHtml(profile.name);
+  const description = escapeHtml(profile.bio || `${profile.name}'s link-in-bio page`);
+  const ogTitle = escapeHtml(profile.openGraph?.title || profile.name);
+  const ogDescription = escapeHtml(profile.openGraph?.description || profile.bio || description);
+  const ogImage = profile.openGraph?.image || profile.avatarUrl || '';
+  const ogSiteName = escapeHtml(profile.openGraph?.siteName || profile.name);
+  const twitterHandle = profile.openGraph?.twitterHandle ? `@${profile.openGraph.twitterHandle.replace('@', '')}` : '';
+  const twitterCardType = profile.openGraph?.twitterCardType || 'summary_large_image';
+  const primaryColor = profile.primaryColor || '#6366f1';
+
   // Assemble the complete App.tsx
   return `${generateImports()}
+import { HelmetProvider, Helmet } from 'react-helmet-async'
 ${generateTypes()}
 ${generateSocialPlatformsConfig()}
 ${generateTiltHook()}
@@ -93,7 +106,32 @@ const sortedBlocks = [...blocks].sort((a, b) => {
   return aCol - bCol
 })
 
-export default function App() {
+function SEO() {
+  return (
+    <Helmet>
+      {/* Primary Meta Tags */}
+      <title>${title}</title>
+      <meta name="description" content="${description}" />
+      <meta name="theme-color" content="${primaryColor}" />
+      
+      {/* Open Graph / Facebook */}
+      <meta property="og:type" content="website" />
+      <meta property="og:title" content="${ogTitle}" />
+      <meta property="og:description" content="${ogDescription}" />
+      ${ogImage ? `<meta property="og:image" content="${ogImage}" />` : ''}
+      <meta property="og:site_name" content="${ogSiteName}" />
+      
+      {/* Twitter */}
+      <meta property="twitter:card" content="${twitterCardType}" />
+      ${twitterHandle ? `<meta property="twitter:site" content="${twitterHandle}" />` : ''}
+      <meta property="twitter:title" content="${ogTitle}" />
+      <meta property="twitter:description" content="${ogDescription}" />
+      ${ogImage ? `<meta property="twitter:image" content="${ogImage}" />` : ''}
+    </Helmet>
+  )
+}
+
+function AppContent() {
   useAnalytics()
 
   const avatarStyle = { borderRadius: '${avatarRadius}', boxShadow: '${avatarShadow}', border: '${avatarBorder}' }
@@ -101,6 +139,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen font-sans" style={bgStyle}>
+      <SEO />
       ${generateBackgroundBlur(profile.backgroundImage, profile.backgroundBlur)}
       <div className="relative z-10">
 ${generateDesktopLayout(layoutParams)}
@@ -110,6 +149,14 @@ ${generateMobileLayout(layoutParams)}
 ${generateFooter(layoutParams.showBranding)}
       </div>
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <HelmetProvider>
+      <AppContent />
+    </HelmetProvider>
   )
 }
 `;

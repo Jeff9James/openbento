@@ -1,5 +1,5 @@
 /**
- * Generate package.json for exported project
+ * Generate package.json for exported project with PWA support
  */
 
 export const generatePackageJson = (name: string): string => {
@@ -18,6 +18,7 @@ export const generatePackageJson = (name: string): string => {
       dependencies: {
         react: '^18.3.1',
         'react-dom': '^18.3.1',
+        'react-helmet-async': '^2.0.5',
         'lucide-react': '^0.460.0',
         'react-icons': '^5.3.0',
       },
@@ -30,6 +31,7 @@ export const generatePackageJson = (name: string): string => {
         tailwindcss: '^3.4.15',
         typescript: '^5.6.3',
         vite: '^5.4.11',
+        'vite-plugin-pwa': '^0.21.1',
       },
     },
     null,
