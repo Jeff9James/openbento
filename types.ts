@@ -5,6 +5,9 @@ export enum BlockType {
   SOCIAL = 'SOCIAL',
   SOCIAL_ICON = 'SOCIAL_ICON', // Small icon-only social block for 9x9 grid
   MAP = 'MAP',
+  MAP_EMBED = 'MAP_EMBED', // Google Maps embed with directions button
+  RATING = 'RATING', // Google rating embed
+  QR_CODE = 'QR_CODE', // QR code generator block
   SPACER = 'SPACER',
 }
 
@@ -74,6 +77,23 @@ export interface BlockData {
   // Social platform (non-YouTube mode)
   socialPlatform?: SocialPlatform;
   socialHandle?: string; // Stored without leading '@' when possible
+
+  // MAP_EMBED specific (Google Maps embed)
+  mapEmbedUrl?: string; // Full Google Maps embed iframe URL
+  mapAddress?: string; // Address for directions
+  mapShowDirections?: boolean; // Show "Get Directions" button
+  mapZoom?: number; // Zoom level (0-20)
+
+  // RATING specific (Google rating embed)
+  ratingPlaceId?: string; // Google Place ID
+  ratingValue?: number; // Rating value (0-5)
+  ratingCount?: number; // Number of reviews
+  ratingEmbedCode?: string; // Custom embed code for rating widget
+
+  // QR_CODE specific
+  qrContent?: string; // URL or text to encode
+  qrShowDownload?: boolean; // Show download button
+  qrLabel?: string; // Label text under QR
 
   // Z-index for overlapping blocks (runtime only, not saved)
   zIndex?: number;

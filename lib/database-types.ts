@@ -4,6 +4,9 @@ import type { SiteData } from '../types';
 // Subscription tier type
 export type SubscriptionTier = 'free' | 'pro';
 
+// Template category type
+export type TemplateCategory = 'retail' | 'food' | 'services' | 'creative';
+
 // User profile in database
 export interface DbUserProfile {
   id: string;
@@ -30,6 +33,21 @@ export interface DbProject {
   is_published: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// Template in database
+export interface DbTemplate {
+  id: string;
+  name: string;
+  category: TemplateCategory;
+  description: string | null;
+  preview_image: string | null;
+  template_data: SiteData;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  is_public: boolean;
+  usage_count: number;
 }
 
 // Custom domain verification record
