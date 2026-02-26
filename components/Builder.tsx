@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { UserProfile, BlockData, BlockType, SavedBento, AvatarStyle } from '../types';
+import { UserProfile, BlockData, BlockType, SavedBento, AvatarStyle, BentoTemplate } from '../types';
 import Block from './Block';
 import EditorSidebar from './EditorSidebar';
 import ProfileDropdown from './ProfileDropdown';
@@ -10,6 +10,7 @@ import { useHistory } from '../hooks/useHistory';
 import { useSaveStatus } from '../hooks/useSaveStatus';
 import AvatarStyleModal from './AvatarStyleModal';
 import AIGeneratorModal from './AIGeneratorModal';
+import TemplateGallery from './TemplateGallery';
 import { exportSite, type ExportDeploymentTarget } from '../services/export';
 import {
   initializeApp,
@@ -388,6 +389,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProUpgradeModal, setShowProUpgradeModal] = useState(false);
   const [showAccountSettingsModal, setShowAccountSettingsModal] = useState(false);
+  const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const { isAuthenticated, isPro, user, isConfigured: isAuthConfigured } = useAuth();
   const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
@@ -672,7 +674,13 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
               ? 'Location'
               : type === BlockType.SPACER
                 ? 'Spacer'
-                : 'New Block',
+                : type === BlockType.GOOGLE_MAP
+                  ? 'Find Us'
+                  : type === BlockType.GOOGLE_RATING
+                    ? 'Rating'
+                    : type === BlockType.QR_CODE
+                      ? 'Scan QR'
+                      : 'New Block',
       content: '',
       colSpan,
       rowSpan,
@@ -681,13 +689,23 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
           ? 'bg-transparent'
           : type === BlockType.SOCIAL_ICON
             ? 'bg-gray-100'
-            : 'bg-white',
+            : type === BlockType.GOOGLE_RATING
+              ? 'bg-white'
+              : type === BlockType.QR_CODE
+                ? 'bg-white'
+                : 'bg-white',
       textColor: 'text-gray-900',
       gridColumn: gridPosition.col,
       gridRow: gridPosition.row,
       ...(type === BlockType.SOCIAL ? { socialPlatform: 'x' as const, socialHandle: '' } : {}),
       ...(type === BlockType.SOCIAL_ICON
         ? { socialPlatform: 'instagram' as const, socialHandle: '' }
+        : {}),
+      ...(type === BlockType.GOOGLE_MAP
+        ? { showGetDirections: true }
+        : {}),
+      ...(type === BlockType.QR_CODE
+        ? { showQrDownload: true, qrCodeUrl: 'https://yoursite.com', qrCodeSize: 128 }
         : {}),
     };
     handleSetBlocks([...blocks, newBlock]);
@@ -843,6 +861,22 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
 
     // Reset file input
     e.target.value = '';
+  };
+
+  // Handle importing a template
+  const handleImportTemplate = (template: BentoTemplate) => {
+    // Generate new IDs for all blocks to avoid conflicts
+    const generateId = () => Math.random().toString(36).substr(2, 9);
+    const newBlocks = template.blocks.map(block => ({
+      ...block,
+      id: generateId(),
+    }));
+    
+    // Apply template profile and blocks
+    setProfile(template.profile);
+    handleSetBlocks(newBlocks);
+    setShowTemplateGallery(false);
+    setEditingBlockId(null);
   };
 
   // Inline avatar upload - opens crop modal
@@ -1572,6 +1606,16 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
               >
                 <Sparkles size={16} />
                 <span className="hidden sm:inline">AI</span>
+              </button>
+
+              {/* Template Gallery */}
+              <button
+                onClick={() => setShowTemplateGallery(true)}
+                className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-3.5 py-2 rounded-lg shadow-sm hover:from-amber-600 hover:to-orange-700 transition-all text-xs font-semibold flex items-center gap-2"
+                title="Browse templates"
+              >
+                <Layout size={16} />
+                <span className="hidden sm:inline">Templates</span>
               </button>
 
               {/* JSON Import/Export */}
@@ -2363,6 +2407,13 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
           setShowAccountSettingsModal(false);
           setShowProUpgradeModal(true);
         }}
+      />
+
+      {/* Template Gallery */}
+      <TemplateGallery
+        isOpen={showTemplateGallery}
+        onClose={() => setShowTemplateGallery(false)}
+        onImport={handleImportTemplate}
       />
 
       {/* 7. DEPLOY MODAL */}
