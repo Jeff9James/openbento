@@ -5,10 +5,11 @@ export enum BlockType {
   SOCIAL = 'SOCIAL',
   SOCIAL_ICON = 'SOCIAL_ICON', // Small icon-only social block for 9x9 grid
   MAP = 'MAP',
-  MAP_EMBED = 'MAP_EMBED', // Google Maps embed with directions button
-  RATING = 'RATING', // Google rating embed
-  QR_CODE = 'QR_CODE', // QR code generator block
   SPACER = 'SPACER',
+  // Phase 3: Local Business Blocks
+  GOOGLE_MAP = 'GOOGLE_MAP', // Enhanced Google Maps embed with directions
+  GOOGLE_RATING = 'GOOGLE_RATING', // Google Business Profile ratings
+  QR_CODE = 'QR_CODE', // QR code generator block
 }
 
 export type SocialPlatform =
@@ -78,22 +79,21 @@ export interface BlockData {
   socialPlatform?: SocialPlatform;
   socialHandle?: string; // Stored without leading '@' when possible
 
-  // MAP_EMBED specific (Google Maps embed)
-  mapEmbedUrl?: string; // Full Google Maps embed iframe URL
-  mapAddress?: string; // Address for directions
-  mapShowDirections?: boolean; // Show "Get Directions" button
-  mapZoom?: number; // Zoom level (0-20)
+  // Phase 3: Google Map block specific
+  mapEmbedUrl?: string; // Custom Google Maps embed URL
+  showGetDirections?: boolean; // Show "Get Directions" button
+  mapAddress?: string; // Address for directions link
 
-  // RATING specific (Google rating embed)
-  ratingPlaceId?: string; // Google Place ID
-  ratingValue?: number; // Rating value (0-5)
-  ratingCount?: number; // Number of reviews
-  ratingEmbedCode?: string; // Custom embed code for rating widget
+  // Phase 3: Google Rating block specific
+  ratingEmbedUrl?: string; // Google Business Profile rating embed URL
+  ratingPlaceName?: string; // Name of the business for ratings
 
-  // QR_CODE specific
-  qrContent?: string; // URL or text to encode
-  qrShowDownload?: boolean; // Show download button
-  qrLabel?: string; // Label text under QR
+  // Phase 3: QR Code block specific
+  qrCodeUrl?: string; // URL to generate QR code for
+  qrCodeSize?: number; // QR code size (default: 128)
+  showQrDownload?: boolean; // Show download button
+  qrCodeFgColor?: string; // QR code foreground color
+  qrCodeBgColor?: string; // QR code background color
 
   // Z-index for overlapping blocks (runtime only, not saved)
   zIndex?: number;
@@ -155,4 +155,24 @@ export interface SavedBento {
   createdAt: number;
   updatedAt: number;
   data: SiteData;
+}
+
+// Template category for organizing templates
+export type TemplateCategory = 
+  | 'retail' 
+  | 'food' 
+  | 'services' 
+  | 'creative' 
+  | 'personal' 
+  | 'business';
+
+// Pre-built template structure
+export interface BentoTemplate {
+  id: string;
+  name: string;
+  category: TemplateCategory;
+  description: string;
+  preview?: string; // URL to preview image
+  profile: UserProfile;
+  blocks: BlockData[];
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { UserProfile, BlockData, BlockType, SavedBento, AvatarStyle, SiteData } from '../types';
+import { UserProfile, BlockData, BlockType, SavedBento, AvatarStyle, BentoTemplate } from '../types';
 import Block from './Block';
 import EditorSidebar from './EditorSidebar';
 import ProfileDropdown from './ProfileDropdown';
@@ -49,7 +49,7 @@ import {
   AlertCircle,
   HelpCircle,
   LogIn,
-  Grid3X3,
+
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
@@ -386,10 +386,10 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const [showAvatarCropModal, setShowAvatarCropModal] = useState(false);
   const [showAvatarStyleModal, setShowAvatarStyleModal] = useState(false);
   const [showAIGeneratorModal, setShowAIGeneratorModal] = useState(false);
-  const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProUpgradeModal, setShowProUpgradeModal] = useState(false);
   const [showAccountSettingsModal, setShowAccountSettingsModal] = useState(false);
+  const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const { isAuthenticated, isPro, user, isConfigured: isAuthConfigured } = useAuth();
   const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
@@ -575,18 +575,6 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleManualSave]);
 
-  // Handle applying a template
-  const handleApplyTemplate = useCallback(
-    (templateData: SiteData) => {
-      if (!activeBento) return;
-      
-      // Apply the template data
-      setSiteData({ profile: templateData.profile, blocks: templateData.blocks });
-      autoSave(templateData.profile, templateData.blocks);
-    },
-    [activeBento, setSiteData, autoSave]
-  );
-
   // Handle profile changes with auto-save
   const handleSetProfile = useCallback(
     (newProfile: UserProfile | ((prev: UserProfile) => UserProfile)) => {
@@ -670,9 +658,6 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
     const getSpans = () => {
       if (type === BlockType.SOCIAL_ICON) return { colSpan: 1, rowSpan: 1 };
       if (type === BlockType.SPACER) return { colSpan: 9, rowSpan: 1 };
-      if (type === BlockType.MAP_EMBED) return { colSpan: 6, rowSpan: 6 };
-      if (type === BlockType.RATING) return { colSpan: 3, rowSpan: 3 };
-      if (type === BlockType.QR_CODE) return { colSpan: 3, rowSpan: 3 };
       return { colSpan: 3, rowSpan: 3 }; // Regular blocks take 3x3 cells
     };
     const { colSpan, rowSpan } = getSpans();
@@ -687,14 +672,14 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
             ? ''
             : type === BlockType.MAP
               ? 'Location'
-              : type === BlockType.MAP_EMBED
-                ? 'Find Us'
-                : type === BlockType.RATING
-                  ? 'Our Rating'
-                  : type === BlockType.QR_CODE
-                    ? 'Scan Me'
-                    : type === BlockType.SPACER
-                      ? 'Spacer'
+              : type === BlockType.SPACER
+                ? 'Spacer'
+                : type === BlockType.GOOGLE_MAP
+                  ? 'Find Us'
+                  : type === BlockType.GOOGLE_RATING
+                    ? 'Rating'
+                    : type === BlockType.QR_CODE
+                      ? 'Scan QR'
                       : 'New Block',
       content: '',
       colSpan,
@@ -704,8 +689,8 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
           ? 'bg-transparent'
           : type === BlockType.SOCIAL_ICON
             ? 'bg-gray-100'
-            : type === BlockType.RATING
-              ? 'bg-yellow-50'
+            : type === BlockType.GOOGLE_RATING
+              ? 'bg-white'
               : type === BlockType.QR_CODE
                 ? 'bg-white'
                 : 'bg-white',
@@ -716,14 +701,11 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
       ...(type === BlockType.SOCIAL_ICON
         ? { socialPlatform: 'instagram' as const, socialHandle: '' }
         : {}),
-      ...(type === BlockType.MAP_EMBED
-        ? { mapShowDirections: true, mapZoom: 15 }
-        : {}),
-      ...(type === BlockType.RATING
-        ? { ratingValue: 4.8, ratingCount: 0 }
+      ...(type === BlockType.GOOGLE_MAP
+        ? { showGetDirections: true }
         : {}),
       ...(type === BlockType.QR_CODE
-        ? { qrShowDownload: true, qrLabel: 'Scan to visit' }
+        ? { showQrDownload: true, qrCodeUrl: 'https://yoursite.com', qrCodeSize: 128 }
         : {}),
     };
     handleSetBlocks([...blocks, newBlock]);
@@ -879,6 +861,22 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
 
     // Reset file input
     e.target.value = '';
+  };
+
+  // Handle importing a template
+  const handleImportTemplate = (template: BentoTemplate) => {
+    // Generate new IDs for all blocks to avoid conflicts
+    const generateId = () => Math.random().toString(36).substr(2, 9);
+    const newBlocks = template.blocks.map(block => ({
+      ...block,
+      id: generateId(),
+    }));
+    
+    // Apply template profile and blocks
+    setProfile(template.profile);
+    handleSetBlocks(newBlocks);
+    setShowTemplateGallery(false);
+    setEditingBlockId(null);
   };
 
   // Inline avatar upload - opens crop modal
@@ -1610,13 +1608,13 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                 <span className="hidden sm:inline">AI</span>
               </button>
 
-              {/* Templates */}
+              {/* Template Gallery */}
               <button
                 onClick={() => setShowTemplateGallery(true)}
-                className="bg-white px-3.5 py-2 rounded-lg shadow-sm border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2"
-                title="Browse Templates"
+                className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-3.5 py-2 rounded-lg shadow-sm hover:from-amber-600 hover:to-orange-700 transition-all text-xs font-semibold flex items-center gap-2"
+                title="Browse templates"
               >
-                <Grid3X3 size={16} />
+                <Layout size={16} />
                 <span className="hidden sm:inline">Templates</span>
               </button>
 
@@ -2391,13 +2389,6 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
         }}
       />
 
-      {/* 7. TEMPLATE GALLERY MODAL */}
-      <TemplateGallery
-        isOpen={showTemplateGallery}
-        onClose={() => setShowTemplateGallery(false)}
-        onApplyTemplate={handleApplyTemplate}
-      />
-
       {/* AUTH MODALS */}
       {isAuthConfigured && (
         <AuthModal
@@ -2416,6 +2407,13 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
           setShowAccountSettingsModal(false);
           setShowProUpgradeModal(true);
         }}
+      />
+
+      {/* Template Gallery */}
+      <TemplateGallery
+        isOpen={showTemplateGallery}
+        onClose={() => setShowTemplateGallery(false)}
+        onImport={handleImportTemplate}
       />
 
       {/* 7. DEPLOY MODAL */}
