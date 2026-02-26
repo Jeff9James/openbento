@@ -23,6 +23,9 @@ import {
   Navigation,
   Star,
   QrCode,
+  Box,
+  BarChart3,
+  Code,
 } from 'lucide-react';
 import {
   buildSocialUrl,
@@ -1111,6 +1114,9 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                     icon: MoveVertical,
                     color: 'bg-gray-400',
                   },
+                  { type: BlockType.THREE_D, label: '3D Room', icon: Box, color: 'bg-violet-500' },
+                  { type: BlockType.CHART, label: 'Chart', icon: BarChart3, color: 'bg-blue-500' },
+                  { type: BlockType.CUSTOM_HTML, label: 'HTML', icon: Code, color: 'bg-gray-700' },
                 ].map((btn) => (
                   <button
                     type="button"
