@@ -50,6 +50,10 @@ import {
   HelpCircle,
   LogIn,
   Grid3X3,
+  Box,
+  Code,
+  MousePointer2,
+  Cpu,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
@@ -58,6 +62,13 @@ import { useAuth } from '../lib/AuthContext';
 import AuthModal from './AuthModal';
 import ProUpgradeModal from './ProUpgradeModal';
 import AccountSettingsModal from './AccountSettingsModal';
+import { useProFeatures } from '../hooks/useProFeatures';
+import { AdBanner, AdContainer } from './AdBanner';
+import { ProGuard } from './ProGuard';
+import { ProAnalyticsDashboard } from './ProAnalyticsDashboard';
+import { EditableWebsiteMode } from './EditableWebsiteMode';
+import WebLLMModal from './WebLLMModal';
+import { ThreeDBlock, ThreeDBlockPreview } from './ThreeDBlock';
 
 interface BuilderProps {
   onBack?: () => void;
@@ -389,8 +400,13 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProUpgradeModal, setShowProUpgradeModal] = useState(false);
+  const [showEditableWebsiteMode, setShowEditableWebsiteMode] = useState(false);
+  const [showWebLLMModal, setShowWebLLMModal] = useState(false);
+  const [showThreeDBlock, setShowThreeDBlock] = useState(false);
+  const [threeDBlockConfig, setThreeDBlockConfig] = useState<{ isOpen: boolean; blockId?: string; config?: any }>({ isOpen: false });
   const [showAccountSettingsModal, setShowAccountSettingsModal] = useState(false);
   const { isAuthenticated, isPro, user, isConfigured: isAuthConfigured } = useAuth();
+  const { limits, checkFeature, canUseWebLLM, canUse3DBlocks, canUseLivePreview, canUseCustomCSS } = useProFeatures();
   const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [isLoading, setIsLoading] = useState(true);
@@ -673,6 +689,9 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
       if (type === BlockType.MAP_EMBED) return { colSpan: 6, rowSpan: 6 };
       if (type === BlockType.RATING) return { colSpan: 3, rowSpan: 3 };
       if (type === BlockType.QR_CODE) return { colSpan: 3, rowSpan: 3 };
+      if (type === BlockType.THREE_D) return { colSpan: 6, rowSpan: 6 };
+      if (type === BlockType.CHART) return { colSpan: 6, rowSpan: 4 };
+      if (type === BlockType.CUSTOM_HTML) return { colSpan: 6, rowSpan: 4 };
       return { colSpan: 3, rowSpan: 3 }; // Regular blocks take 3x3 cells
     };
     const { colSpan, rowSpan } = getSpans();
@@ -693,6 +712,12 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                   ? 'Our Rating'
                   : type === BlockType.QR_CODE
                     ? 'Scan Me'
+                    : type === BlockType.THREE_D
+                    ? '3D Room'
+                    : type === BlockType.CHART
+                    ? 'Analytics Chart'
+                    : type === BlockType.CUSTOM_HTML
+                    ? 'Custom HTML'
                     : type === BlockType.SPACER
                       ? 'Spacer'
                       : 'New Block',
@@ -1609,6 +1634,23 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                 <Sparkles size={16} />
                 <span className="hidden sm:inline">AI</span>
               </button>
+              {/* Pro Features */}
+              <button
+                onClick={() => canUseLivePreview ? setShowEditableWebsiteMode(true) : setShowProUpgradeModal(true)}
+                className={`px-3.5 py-2 rounded-lg shadow-sm border text-xs font-semibold flex items-center gap-2 transition-all ${canUseLivePreview ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:from-amber-500 hover:to-orange-600" : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"}`}
+                title={canUseLivePreview ? "Live Editor (Pro)" : "Upgrade to Pro for Live Editor"}
+              >
+                <MousePointer2 size={16} />
+                <span className="hidden sm:inline">{canUseLivePreview ? "Live Editor" : "Pro"}</span>
+              </button>
+              <button
+                onClick={() => canUseWebLLM ? setShowWebLLMModal(true) : setShowProUpgradeModal(true)}
+                className={`px-3.5 py-2 rounded-lg shadow-sm border text-xs font-semibold flex items-center gap-2 transition-all ${canUseWebLLM ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600" : "bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-200"}`}
+                title={canUseWebLLM ? "AI Editor (Pro)" : "Upgrade to Pro for AI Editor"}
+              >
+                <Cpu size={16} />
+                <span className="hidden sm:inline">AI Editor</span>
+              </button>
 
               {/* Templates */}
               <button
@@ -2342,7 +2384,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
           }
         }}
         blocks={blocks}
-        setBlocks={handleSetBlocks}
+        onBlocksChange={handleSetBlocks}
       />
 
       {/* 4. AVATAR CROP MODAL */}
@@ -2936,6 +2978,43 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
           </motion.div>
         )}
 
+      {/* Pro Feature Modals */}
+      <EditableWebsiteMode
+        isOpen={showEditableWebsiteMode}
+        onClose={() => setShowEditableWebsiteMode(false)}
+        profile={profile}
+        blocks={blocks}
+        onProfileChange={handleSetProfile}
+        onBlocksChange={handleSetBlocks}
+        onUpgradeClick={() => {
+          setShowEditableWebsiteMode(false);
+          setShowProUpgradeModal(true);
+        }}
+      />
+      <WebLLMModal
+        isOpen={showWebLLMModal}
+        onClose={() => setShowWebLLMModal(false)}
+        currentProfile={profile}
+        currentBlocks={blocks}
+        onApplySuggestion={(suggestion) => {
+          if (suggestion.type === "layout" && "blocks" in suggestion) {
+            suggestion.blocks.forEach((block) => addBlock(block.type as BlockType));
+          }
+        }}
+      />
+      <ThreeDBlock
+        isOpen={threeDBlockConfig.isOpen}
+        onClose={() => setThreeDBlockConfig({ isOpen: false })}
+        roomName={threeDBlockConfig.config?.roomName || "My 3D Space"}
+        roomType={threeDBlockConfig.config?.roomType || "store"}
+        hotspots={threeDBlockConfig.config?.hotspots || []}
+        onUpgradeClick={() => {
+          setThreeDBlockConfig({ isOpen: false });
+          setShowProUpgradeModal(true);
+        }}
+      />
+      {/* Ad Banner for Free Tier */}
+      {!isPro && <AdBanner variant="banner" onUpgradeClick={() => setShowProUpgradeModal(true)} />}
       {/* Global Tooltip Component */}
       <Tooltip id="builder-tooltip" className="react-tooltip" />
 

@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Crown, Check, Zap, Shield, Globe, Sparkles } from 'lucide-react';
+import { X, Crown, Check, Zap, Shield, Globe, Sparkles, Loader2, CreditCard, Lock } from 'lucide-react';
+import { createCheckoutSession, PRICING, isStripeConfigured } from '../lib/stripe';
+import { useAuth } from '../lib/AuthContext';
 
 interface ProUpgradeModalProps {
   isOpen: boolean;
@@ -26,15 +28,76 @@ const features = [
   {
     icon: Sparkles,
     title: 'Advanced Analytics',
-    description: 'Detailed insights and visitor tracking',
+    description: 'Detailed insights with charts and visitor tracking',
+  },
+  {
+    icon: CreditCard,
+    title: 'AI Website Editor',
+    description: 'Free local AI suggestions with WebLLM',
+  },
+  {
+    icon: Globe,
+    title: '3D Room Views',
+    description: 'Interactive Three.js blocks for immersive experiences',
+  },
+  {
+    icon: Lock,
+    title: 'No Ads',
+    description: 'Enjoy an ad-free experience across all pages',
+  },
+  {
+    icon: Sparkles,
+    title: 'Live Preview Editor',
+    description: 'Webflow-like editing with custom CSS support',
   },
 ];
 
 export default function ProUpgradeModal({ isOpen, onClose }: ProUpgradeModalProps) {
-  const handleUpgrade = () => {
-    // In a real implementation, this would redirect to Stripe checkout
-    // For now, we'll show an alert
-    alert('Stripe integration coming soon! For now, please contact support to upgrade.');
+  const { user, isAuthenticated } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
+  const stripeConfigured = isStripeConfigured();
+
+  const handleUpgrade = async () => {
+    if (!isAuthenticated) {
+      setError('Please sign in first to upgrade to Pro');
+      return;
+    }
+
+    if (!stripeConfigured) {
+      setError('Payment system is currently being set up. Please try again later.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const priceId =
+        billingInterval === 'monthly'
+          ? PRICING.PRO_MONTHLY.priceId
+          : PRICING.PRO_YEARLY.priceId;
+
+      if (!priceId) {
+        setError('Price configuration not found. Please contact support.');
+        setIsLoading(false);
+        return;
+      }
+
+      const session = await createCheckoutSession(priceId, user?.email);
+
+      if (session?.url) {
+        window.location.href = session.url;
+      } else {
+        setError('Failed to start checkout. Please try again.');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Checkout error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -52,7 +115,7 @@ export default function ProUpgradeModal({ isOpen, onClose }: ProUpgradeModalProp
           initial={{ scale: 0.95, opacity: 0, y: 16 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 16 }}
-          className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden ring-1 ring-gray-900/5"
+          className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden ring-1 ring-gray-900/5 max-h-[90vh] overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-label="Upgrade to Pro"
@@ -73,13 +136,44 @@ export default function ProUpgradeModal({ isOpen, onClose }: ProUpgradeModalProp
               </div>
               <div>
                 <h2 className="text-2xl font-bold">Upgrade to Pro</h2>
-                <p className="text-white/80">Unlock all features</p>
+                <p className="text-white/80">Unlock all premium features</p>
               </div>
             </div>
 
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-bold">$9</span>
-              <span className="text-white/80">/month</span>
+            {/* Billing Toggle */}
+            <div className="flex items-center justify-center gap-4 mt-4">
+              <div className="inline-flex bg-white/20 rounded-xl p-1">
+                <button
+                  onClick={() => setBillingInterval('monthly')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    billingInterval === 'monthly'
+                      ? 'bg-white text-orange-600'
+                      : 'text-white hover:bg-white/10'
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBillingInterval('yearly')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                    billingInterval === 'yearly'
+                      ? 'bg-white text-orange-600'
+                      : 'text-white hover:bg-white/10'
+                  }`}
+                >
+                  Yearly
+                  <span className="text-xs bg-green-500 text-white px-1.5 py-0.5 rounded-full">
+                    Save 27%
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-baseline justify-center gap-1 mt-4">
+              <span className="text-4xl font-bold">
+                ${billingInterval === 'monthly' ? PRICING.PRO_MONTHLY.amount : PRICING.PRO_YEARLY.amount}
+              </span>
+              <span className="text-white/80">/{billingInterval === 'monthly' ? 'month' : 'year'}</span>
             </div>
           </div>
 
@@ -87,7 +181,7 @@ export default function ProUpgradeModal({ isOpen, onClose }: ProUpgradeModalProp
           <div className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">What you get:</h3>
 
-            <div className="space-y-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               {features.map((feature, index) => (
                 <div key={index} className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
@@ -123,20 +217,60 @@ export default function ProUpgradeModal({ isOpen, onClose }: ProUpgradeModalProp
                 <div className="text-left text-gray-600">Analytics</div>
                 <div className="text-gray-600">Basic</div>
                 <div className="text-amber-600">Advanced</div>
+
+                <div className="text-left text-gray-600">AI Editor</div>
+                <div className="text-gray-400">—</div>
+                <div className="text-amber-600"><Check className="w-4 h-4 mx-auto" /></div>
+
+                <div className="text-left text-gray-600">3D Blocks</div>
+                <div className="text-gray-400">—</div>
+                <div className="text-amber-600"><Check className="w-4 h-4 mx-auto" /></div>
+
+                <div className="text-left text-gray-600">Advertisements</div>
+                <div className="text-gray-600">Shown</div>
+                <div className="text-amber-600">Removed</div>
               </div>
             </div>
+
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                {error}
+              </div>
+            )}
+
+            {!isAuthenticated && (
+              <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm">
+                Please sign in first to upgrade to Pro
+              </div>
+            )}
+
+            {!stripeConfigured && (
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl text-blue-800 text-sm">
+                Stripe payment system is being configured. Contact support to upgrade.
+              </div>
+            )}
 
             {/* Upgrade Button */}
             <button
               onClick={handleUpgrade}
-              className="w-full py-4 bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-white rounded-xl font-semibold text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              disabled={isLoading || !isAuthenticated || !stripeConfigured}
+              className="w-full py-4 bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-white rounded-xl font-semibold text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Crown className="w-5 h-5" />
-              Upgrade Now
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Crown className="w-5 h-5" />
+                  Upgrade Now
+                </>
+              )}
             </button>
 
             <p className="text-center text-xs text-gray-500 mt-4">
-              Cancel anytime. No questions asked.
+              Secure payment powered by Stripe. Cancel anytime. No questions asked.
             </p>
           </div>
         </motion.div>

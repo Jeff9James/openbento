@@ -217,13 +217,41 @@ export function useAuth() {
 // Hook to check if user can use Pro features
 export function useProFeatures() {
   const { isPro, isAuthenticated } = useAuth();
-  
+
   return {
+    isPro,
+    isAuthenticated,
     canUseCustomDomain: isPro,
     canUseAdvancedAnalytics: isPro,
     canRemoveBranding: isPro,
     canExportToCustomDomain: isPro,
+    canUseWebLLM: isPro,
+    canUse3DBlocks: isPro,
+    canUseLivePreview: isPro,
+    canUseCustomCSS: isPro,
+    canExportToAllPlatforms: isPro,
+    hasPrioritySupport: isPro,
+    hasNoAds: isPro,
     requiresUpgrade: !isPro,
+    limits: {
+      maxProjects: isPro ? Infinity : 3,
+      maxBlocksPerProject: isPro ? Infinity : 15,
+      canUseCustomDomain: isPro,
+      canRemoveBranding: isPro,
+      canUseAdvancedAnalytics: isPro,
+      canUseWebLLM: isPro,
+      canUse3DBlocks: isPro,
+      canUseCustomCSS: isPro,
+      canUseLivePreview: isPro,
+      canExportToAllPlatforms: isPro,
+      hasPrioritySupport: isPro,
+      hasNoAds: isPro,
+    },
+    checkFeature: (feature: string) => isPro,
+    getUpgradeMessage: (featureName: string) =>
+      isAuthenticated
+        ? `Upgrade to Pro to unlock ${featureName}`
+        : `Sign in and upgrade to Pro to unlock ${featureName}`,
     upgradeMessage: isAuthenticated
       ? 'Upgrade to Pro to unlock this feature'
       : 'Sign in and upgrade to Pro to unlock this feature',
