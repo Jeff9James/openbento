@@ -9,10 +9,12 @@ type ImageCropModalProps = {
   title?: string;
   onCancel: () => void;
   onConfirm: (dataUrl: string) => void;
+  aspectRatio?: number; // width/height ratio (default: 1 for square, 1200/630 ≈ 1.91 for OG images)
+  outputWidth?: number; // output width in pixels (height is calculated from aspect ratio)
 };
 
-const CROP_SIZE = 320; // preview box size (px)
-const OUTPUT_SIZE = 512; // exported avatar size (px)
+const DEFAULT_CROP_SIZE = 320; // default preview box size (px)
+const DEFAULT_OUTPUT_SIZE = 512; // default exported avatar size (px)
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.05;
@@ -25,6 +27,8 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
   title,
   onCancel,
   onConfirm,
+  aspectRatio = 1,
+  outputWidth = DEFAULT_OUTPUT_SIZE,
 }) => {
   const sourceImageRef = useRef<HTMLImageElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
@@ -53,6 +57,33 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [natural, setNatural] = useState<{ w: number; h: number } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Calculate crop dimensions based on aspect ratio
+  // For square (1:1), use DEFAULT_CROP_SIZE for both dimensions
+  // For other ratios, width stays at DEFAULT_CROP_SIZE, height is calculated
+  const cropDimensions = useMemo(() => {
+    if (aspectRatio >= 1) {
+      // Landscape or square: width = DEFAULT_CROP_SIZE, height = width / ratio
+      return {
+        width: DEFAULT_CROP_SIZE,
+        height: DEFAULT_CROP_SIZE / aspectRatio,
+      };
+    } else {
+      // Portrait: height = DEFAULT_CROP_SIZE, width = height * ratio
+      return {
+        width: DEFAULT_CROP_SIZE * aspectRatio,
+        height: DEFAULT_CROP_SIZE,
+      };
+    }
+  }, [aspectRatio]);
+
+  // Calculate output dimensions
+  const outputDimensions = useMemo(() => {
+    return {
+      width: outputWidth,
+      height: Math.round(outputWidth / aspectRatio),
+    };
+  }, [aspectRatio, outputWidth]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -103,8 +134,11 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
 
   const baseScale = useMemo(() => {
     if (!natural) return 1;
-    return Math.max(CROP_SIZE / natural.w, CROP_SIZE / natural.h);
-  }, [natural]);
+    return Math.max(
+      cropDimensions.width / natural.w,
+      cropDimensions.height / natural.h
+    );
+  }, [natural, cropDimensions]);
 
   const scale = baseScale * zoom;
 
@@ -116,14 +150,14 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const clampOffset = useCallback(
     (next: { x: number; y: number }) => {
       if (!natural) return { x: 0, y: 0 };
-      const maxX = Math.max(0, (displayed.w - CROP_SIZE) / 2);
-      const maxY = Math.max(0, (displayed.h - CROP_SIZE) / 2);
+      const maxX = Math.max(0, (displayed.w - cropDimensions.width) / 2);
+      const maxY = Math.max(0, (displayed.h - cropDimensions.height) / 2);
       return {
         x: clamp(next.x, -maxX, maxX),
         y: clamp(next.y, -maxY, maxY),
       };
     },
-    [displayed.w, displayed.h, natural]
+    [displayed.w, displayed.h, natural, cropDimensions]
   );
 
   useEffect(() => {
@@ -304,25 +338,25 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
     if (!source || !natural) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = OUTPUT_SIZE;
-    canvas.height = OUTPUT_SIZE;
+    canvas.width = outputDimensions.width;
+    canvas.height = outputDimensions.height;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const topLeftX = CROP_SIZE / 2 - displayed.w / 2 + offset.x;
-    const topLeftY = CROP_SIZE / 2 - displayed.h / 2 + offset.y;
+    const topLeftX = cropDimensions.width / 2 - displayed.w / 2 + offset.x;
+    const topLeftY = cropDimensions.height / 2 - displayed.h / 2 + offset.y;
 
     const srcX = -topLeftX / scale;
     const srcY = -topLeftY / scale;
-    const srcW = CROP_SIZE / scale;
-    const srcH = CROP_SIZE / scale;
+    const srcW = cropDimensions.width / scale;
+    const srcH = cropDimensions.height / scale;
 
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+    ctx.fillRect(0, 0, outputDimensions.width, outputDimensions.height);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    ctx.drawImage(source, srcX, srcY, srcW, srcH, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+    ctx.drawImage(source, srcX, srcY, srcW, srcH, 0, 0, outputDimensions.width, outputDimensions.height);
 
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     onConfirm(dataUrl);
@@ -366,7 +400,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
               <div className="flex items-start justify-center">
                 <div
                   className="relative bg-gray-100 border border-gray-200 rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing"
-                  style={{ width: CROP_SIZE, height: CROP_SIZE, touchAction: 'none' }}
+                  style={{ width: cropDimensions.width, height: cropDimensions.height, touchAction: 'none' }}
                   onPointerDown={onPointerDown}
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
