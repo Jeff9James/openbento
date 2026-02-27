@@ -4,14 +4,15 @@
 
 import { escapeHtml } from '../helpers';
 import { SiteData } from '../../../types';
+import { MediaMap } from '../mediaExtractor';
 
-export const generateIndexHtml = (data: SiteData): string => {
+export const generateIndexHtml = (data: SiteData, mediaMap?: MediaMap): string => {
   const { profile } = data;
   const title = escapeHtml(profile.name);
   const description = escapeHtml(profile.bio || `${profile.name}'s link-in-bio page`);
   const ogTitle = escapeHtml(profile.openGraph?.title || profile.name);
   const ogDescription = escapeHtml(profile.openGraph?.description || profile.bio || '');
-  const ogImage = profile.openGraph?.image || profile.avatarUrl || '';
+  const ogImage = mediaMap?.['og_image'] || profile.openGraph?.image || mediaMap?.['profile_avatar'] || profile.avatarUrl || '';
   const ogSiteName = escapeHtml(profile.openGraph?.siteName || profile.name);
   const twitterHandle = profile.openGraph?.twitterHandle ? `@${profile.openGraph.twitterHandle.replace('@', '')}` : '';
   const twitterCardType = profile.openGraph?.twitterCardType || 'summary_large_image';
