@@ -59,8 +59,8 @@ export async function upsertUserProfile(
 export async function updateUserSubscription(
   userId: string,
   tier: SubscriptionTier,
-  stripeCustomerId?: string,
-  stripeSubscriptionId?: string
+  dodoCustomerId?: string,
+  dodoSubscriptionId?: string
 ): Promise<boolean> {
   if (!supabase) return false;
 
@@ -69,8 +69,8 @@ export async function updateUserSubscription(
     .update({
       subscription_tier: tier,
       subscription_status: tier === 'pro' ? 'active' : 'inactive',
-      stripe_customer_id: stripeCustomerId || null,
-      stripe_subscription_id: stripeSubscriptionId || null,
+      dodo_customer_id: dodoCustomerId || null,
+      dodo_subscription_id: dodoSubscriptionId || null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', userId);
