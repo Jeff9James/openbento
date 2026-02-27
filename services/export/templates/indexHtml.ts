@@ -4,14 +4,23 @@
 
 import { escapeHtml } from '../helpers';
 import { SiteData } from '../../../types';
+import { MediaMap } from '../mediaExtractor';
 
-export const generateIndexHtml = (data: SiteData): string => {
+export const generateIndexHtml = (data: SiteData, mediaMap?: MediaMap): string => {
   const { profile } = data;
   const title = escapeHtml(profile.name);
   const description = escapeHtml(profile.bio || `${profile.name}'s link-in-bio page`);
   const ogTitle = escapeHtml(profile.openGraph?.title || profile.name);
   const ogDescription = escapeHtml(profile.openGraph?.description || profile.bio || '');
-  const ogImage = profile.openGraph?.image || profile.avatarUrl || '';
+
+  // Use mediaMap for OG image if it was extracted from base64, otherwise use original
+  let ogImage = mediaMap?.['og_image'] || profile.openGraph?.image || profile.avatarUrl || '';
+
+  // For avatar fallback, also check mediaMap
+  if (!ogImage && mediaMap?.['profile_avatar']) {
+    ogImage = mediaMap['profile_avatar'];
+  }
+
   const ogSiteName = escapeHtml(profile.openGraph?.siteName || profile.name);
   const twitterHandle = profile.openGraph?.twitterHandle ? `@${profile.openGraph.twitterHandle.replace('@', '')}` : '';
   const twitterCardType = profile.openGraph?.twitterCardType || 'summary_large_image';
