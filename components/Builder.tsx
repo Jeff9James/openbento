@@ -6,6 +6,7 @@ import ProfileDropdown from './ProfileDropdown';
 import SettingsModal from './SettingsModal';
 import ImageCropModal from './ImageCropModal';
 import OnboardingWizard from './OnboardingWizard';
+import FAQModal, { HelpChatBubble } from './FAQModal';
 import { useHistory } from '../hooks/useHistory';
 import { useSaveStatus } from '../hooks/useSaveStatus';
 import AvatarStyleModal from './AvatarStyleModal';
@@ -411,6 +412,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [isLoading, setIsLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showFAQModal, setShowFAQModal] = useState(false);
   const {
     state: siteData,
     set: setSiteData,
@@ -3039,6 +3041,8 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
           }
         }}
       />
+      <FAQModal isOpen={showFAQModal} onClose={() => setShowFAQModal(false)} />
+      <HelpChatBubble onClick={() => setShowFAQModal(true)} />
       </AnimatePresence>
     </div>
   );
