@@ -12,8 +12,11 @@ interface ImportMetaEnv {
   readonly VITE_STRIPE_PUBLISHABLE_KEY?: string;
   readonly VITE_STRIPE_PRO_MONTHLY_PRICE_ID?: string;
   readonly VITE_STRIPE_PRO_YEARLY_PRICE_ID?: string;
-  // Optional
+  // ZeroClick.ai Ads
+  readonly VITE_ZEROCLICK_API_KEY?: string;
+  // Legacy: Google AdSense (deprecated)
   readonly VITE_GOOGLE_ADSENSE_CLIENT_ID?: string;
+  // Optional
   readonly VITE_PLAUSIBLE_DOMAIN?: string;
 }
 

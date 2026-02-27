@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Crown, X, Sparkles } from 'lucide-react';
+import { Crown, Sparkles } from 'lucide-react';
 import { useProFeatures } from '../hooks/useProFeatures';
+import { ZeroClickAd } from './ZeroClickAd';
 
 interface AdBannerProps {
   variant?: 'banner' | 'sidebar' | 'inline' | 'modal';
@@ -51,26 +52,35 @@ export const AdBanner: React.FC<AdBannerProps> = ({
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-100 via-orange-50 to-pink-100 px-4 py-3 ${className}`}
+        className={`relative overflow-hidden ${className}`}
       >
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
-              <Crown className="h-5 w-5 text-white" />
+        {/* ZeroClick Ad at the top */}
+        <ZeroClickAd
+          query="productivity software developer tools"
+          format="inline"
+          className="mb-3"
+        />
+        {/* Pro upgrade banner */}
+        <div className="rounded-xl bg-gradient-to-r from-amber-100 via-orange-50 to-pink-100 px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
+                <Crown className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{content.title}</p>
+                <p className="text-xs text-gray-600">{content.description}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">{content.title}</p>
-              <p className="text-xs text-gray-600">{content.description}</p>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onUpgradeClick}
+              className="shrink-0 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-shadow hover:shadow-md"
+            >
+              {content.cta}
+            </motion.button>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onUpgradeClick}
-            className="shrink-0 rounded-lg bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-shadow hover:shadow-md"
-          >
-            {content.cta}
-          </motion.button>
         </div>
       </motion.div>
     );
@@ -81,22 +91,30 @@ export const AdBanner: React.FC<AdBannerProps> = ({
       <motion.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
-        className={`rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-5 ${className}`}
+        className={`space-y-4 ${className}`}
       >
-        <div className="flex flex-col items-center text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500">
-            <Sparkles className="h-6 w-6 text-white" />
+        {/* ZeroClick Ad */}
+        <ZeroClickAd
+          query="software tools SaaS"
+          format="card"
+        />
+        {/* Pro upgrade card */}
+        <div className="rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-5">
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500">
+              <Sparkles className="h-6 w-6 text-white" />
+            </div>
+            <h4 className="mb-1 font-semibold text-gray-900">{content.title}</h4>
+            <p className="mb-4 text-sm text-gray-600">{content.description}</p>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onUpgradeClick}
+              className="w-full rounded-xl bg-gray-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+            >
+              {content.cta}
+            </motion.button>
           </div>
-          <h4 className="mb-1 font-semibold text-gray-900">{content.title}</h4>
-          <p className="mb-4 text-sm text-gray-600">{content.description}</p>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onUpgradeClick}
-            className="w-full rounded-xl bg-gray-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
-          >
-            {content.cta}
-          </motion.button>
         </div>
       </motion.div>
     );
@@ -107,18 +125,24 @@ export const AdBanner: React.FC<AdBannerProps> = ({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className={`flex items-center justify-between rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 ${className}`}
+        className={`space-y-3 ${className}`}
       >
-        <div className="flex items-center gap-2">
-          <Crown className="h-4 w-4 text-amber-500" />
-          <span className="text-sm text-gray-600">{content.description}</span>
+        <ZeroClickAd
+          query="developer tools"
+          format="compact"
+        />
+        <div className="flex items-center justify-between rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Crown className="h-4 w-4 text-amber-500" />
+            <span className="text-sm text-gray-600">{content.description}</span>
+          </div>
+          <button
+            onClick={onUpgradeClick}
+            className="text-sm font-medium text-violet-600 hover:text-violet-700"
+          >
+            {content.cta}
+          </button>
         </div>
-        <button
-          onClick={onUpgradeClick}
-          className="text-sm font-medium text-violet-600 hover:text-violet-700"
-        >
-          {content.cta}
-        </button>
       </motion.div>
     );
   }
@@ -136,6 +160,15 @@ export const AdBanner: React.FC<AdBannerProps> = ({
         </div>
         <h3 className="mb-2 text-xl font-bold text-gray-900">{content.title}</h3>
         <p className="mb-6 text-gray-600">{content.description}</p>
+
+        {/* Show a ZeroClick ad in the modal */}
+        <div className="mb-6">
+          <ZeroClickAd
+            query="premium software"
+            format="inline"
+          />
+        </div>
+
         <div className="flex gap-3">
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -151,84 +184,57 @@ export const AdBanner: React.FC<AdBannerProps> = ({
   );
 };
 
-// Google AdSense placeholder (for when AdSense is configured)
+// ZeroClick Ad wrapper for direct use
+interface ZeroClickAdWrapperProps {
+  query?: string;
+  format?: 'card' | 'inline' | 'compact';
+  className?: string;
+}
+
+export const ZeroClickAdWrapper: React.FC<ZeroClickAdWrapperProps> = ({
+  query = 'software tools',
+  format = 'card',
+  className = '',
+}) => {
+  const { hasNoAds } = useProFeatures();
+
+  if (hasNoAds) {
+    return null;
+  }
+
+  return <ZeroClickAd query={query} format={format} className={className} />;
+};
+
+// Legacy GoogleAd component - now redirects to ZeroClick
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface GoogleAdProps {
   slot: string;
   format?: 'auto' | 'rectangle' | 'horizontal' | 'vertical';
   className?: string;
 }
 
+// This component is kept for backwards compatibility but now uses ZeroClick
 export const GoogleAd: React.FC<GoogleAdProps> = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   slot,
   format = 'auto',
   className = '',
 }) => {
   const { hasNoAds } = useProFeatures();
-  const adRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (hasNoAds) return;
-
-    // Load AdSense script if not already loaded
-    const clientId = import.meta.env.VITE_GOOGLE_ADSENSE_CLIENT_ID;
-    if (!clientId) return;
-
-    const existingScript = document.getElementById('adsense-script');
-    if (!existingScript) {
-      const script = document.createElement('script');
-      script.id = 'adsense-script';
-      script.async = true;
-      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${clientId}`;
-      script.crossOrigin = 'anonymous';
-      document.head.appendChild(script);
-    }
-
-    // Push ad
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).adsbygoogle = (window as any).adsbygoogle || [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).adsbygoogle.push({});
-    } catch {
-      // Ad blocked or failed to load
-    }
-  }, [hasNoAds, slot]);
 
   if (hasNoAds) {
     return null;
   }
 
-  const formatStyles = {
-    auto: 'min-h-[100px]',
-    rectangle: 'w-[300px] h-[250px]',
-    horizontal: 'w-[728px] h-[90px] max-w-full',
-    vertical: 'w-[160px] h-[600px]',
-  };
-
-  const clientId = import.meta.env.VITE_GOOGLE_ADSENSE_CLIENT_ID;
-
-  if (!clientId) {
-    // Show placeholder/promo if AdSense not configured
-    return (
-      <div
-        className={`flex items-center justify-center rounded-xl bg-gray-100 ${formatStyles[format]} ${className}`}
-      >
-        <AdBanner variant="inline" />
-      </div>
-    );
-  }
+  // Map AdSense formats to ZeroClick formats
+  const zeroClickFormat = format === 'vertical' ? 'card' : 'inline';
 
   return (
-    <div ref={adRef} className={`${formatStyles[format]} ${className}`}>
-      <ins
-        className="adsbygoogle"
-        style={{ display: 'block' }}
-        data-ad-client={clientId}
-        data-ad-slot={slot}
-        data-ad-format={format}
-        data-full-width-responsive="true"
-      />
-    </div>
+    <ZeroClickAd
+      query="software SaaS tools"
+      format={zeroClickFormat}
+      className={className}
+    />
   );
 };
 
@@ -266,10 +272,9 @@ export const AdContainer: React.FC<AdContainerProps> = ({
         )}
       </div>
       {showSidebarAd && (
-        <div className="hidden w-64 shrink-0 lg:block">
+        <div className="hidden w-72 shrink-0 lg:block">
           <div className="sticky top-4 space-y-4">
             <AdBanner variant="sidebar" onUpgradeClick={onUpgradeClick} />
-            <GoogleAd slot="sidebar-1" format="vertical" />
           </div>
         </div>
       )}
