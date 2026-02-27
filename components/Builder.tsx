@@ -51,7 +51,6 @@ import {
   HelpCircle,
   LogIn,
   Grid3X3,
-  Box,
   Code,
   MousePointer2,
   Cpu,
@@ -69,7 +68,6 @@ import { ProGuard } from './ProGuard';
 import { ProAnalyticsDashboard } from './ProAnalyticsDashboard';
 import { EditableWebsiteMode } from './EditableWebsiteMode';
 import WebLLMModal from './WebLLMModal';
-import { ThreeDBlock, ThreeDBlockPreview } from './ThreeDBlock';
 import { uploadMedia, formatFileSize } from '../utils/mediaUpload';
 
 interface BuilderProps {
@@ -404,11 +402,9 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const [showProUpgradeModal, setShowProUpgradeModal] = useState(false);
   const [showEditableWebsiteMode, setShowEditableWebsiteMode] = useState(false);
   const [showWebLLMModal, setShowWebLLMModal] = useState(false);
-  const [showThreeDBlock, setShowThreeDBlock] = useState(false);
-  const [threeDBlockConfig, setThreeDBlockConfig] = useState<{ isOpen: boolean; blockId?: string; config?: any }>({ isOpen: false });
   const [showAccountSettingsModal, setShowAccountSettingsModal] = useState(false);
   const { isAuthenticated, isPro, user, isConfigured: isAuthConfigured } = useAuth();
-  const { limits, checkFeature, canUseWebLLM, canUse3DBlocks, canUseLivePreview, canUseCustomCSS } = useProFeatures();
+  const { limits, checkFeature, canUseWebLLM, canUseLivePreview, canUseCustomCSS } = useProFeatures();
   const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [isLoading, setIsLoading] = useState(true);
@@ -692,7 +688,6 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
       if (type === BlockType.MAP_EMBED) return { colSpan: 6, rowSpan: 6 };
       if (type === BlockType.RATING) return { colSpan: 3, rowSpan: 3 };
       if (type === BlockType.QR_CODE) return { colSpan: 3, rowSpan: 3 };
-      if (type === BlockType.THREE_D) return { colSpan: 6, rowSpan: 6 };
       if (type === BlockType.CHART) return { colSpan: 6, rowSpan: 4 };
       if (type === BlockType.CUSTOM_HTML) return { colSpan: 6, rowSpan: 4 };
       return { colSpan: 3, rowSpan: 3 }; // Regular blocks take 3x3 cells
@@ -715,8 +710,6 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                   ? 'Our Rating'
                   : type === BlockType.QR_CODE
                     ? 'Scan Me'
-                    : type === BlockType.THREE_D
-                    ? '3D Room'
                     : type === BlockType.CHART
                     ? 'Analytics Chart'
                     : type === BlockType.CUSTOM_HTML
@@ -3005,17 +2998,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
           }
         }}
       />
-      <ThreeDBlock
-        isOpen={threeDBlockConfig.isOpen}
-        onClose={() => setThreeDBlockConfig({ isOpen: false })}
-        roomName={threeDBlockConfig.config?.roomName || "My 3D Space"}
-        roomType={threeDBlockConfig.config?.roomType || "store"}
-        hotspots={threeDBlockConfig.config?.hotspots || []}
-        onUpgradeClick={() => {
-          setThreeDBlockConfig({ isOpen: false });
-          setShowProUpgradeModal(true);
-        }}
-      />
+
       {/* Ad Banner for Free Tier */}
       {!isPro && <AdBanner variant="banner" onUpgradeClick={() => setShowProUpgradeModal(true)} />}
       {/* Global Tooltip Component */}

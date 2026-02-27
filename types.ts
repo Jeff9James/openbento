@@ -9,7 +9,6 @@ export enum BlockType {
   RATING = 'RATING', // Google rating embed
   QR_CODE = 'QR_CODE', // QR code generator block
   SPACER = 'SPACER',
-  THREE_D = 'THREE_D', // Pro: Three.js 3D room view
   CHART = 'CHART', // Pro: Analytics chart block
   CUSTOM_HTML = 'CUSTOM_HTML', // Pro: Custom HTML/CSS block
 }
@@ -100,22 +99,6 @@ export interface BlockData {
 
   // Z-index for overlapping blocks (runtime only, not saved)
   zIndex?: number;
-
-  // THREE_D block specific
-  threeDConfig?: {
-    roomType: 'store' | 'gallery' | 'showroom' | 'custom';
-    roomName: string;
-    hotspots: Array<{
-      id: string;
-      position: [number, number, number];
-      title: string;
-      description: string;
-      type: 'product' | 'info' | 'link' | 'location';
-      url?: string;
-      price?: string;
-    }>;
-    backgroundColor?: string;
-  };
 
   // CHART block specific
   chartConfig?: {

@@ -48,11 +48,6 @@ const featureMetadata: Record<
     title: 'AI WebLLM',
     description: 'Free local AI for layout suggestions',
   },
-  canUse3DBlocks: {
-    icon: Box,
-    title: '3D Blocks',
-    description: 'Interactive 3D room views',
-  },
   canUseCustomCSS: {
     icon: Code,
     title: 'Custom CSS',

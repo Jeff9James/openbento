@@ -7,7 +7,6 @@ export interface ProFeatureLimits {
   canRemoveBranding: boolean;
   canUseAdvancedAnalytics: boolean;
   canUseWebLLM: boolean;
-  canUse3DBlocks: boolean;
   canUseCustomCSS: boolean;
   canUseLivePreview: boolean;
   canExportToAllPlatforms: boolean;
@@ -22,7 +21,6 @@ export const FREE_TIER_LIMITS: ProFeatureLimits = {
   canRemoveBranding: false,
   canUseAdvancedAnalytics: false,
   canUseWebLLM: false,
-  canUse3DBlocks: false,
   canUseCustomCSS: false,
   canUseLivePreview: false,
   canExportToAllPlatforms: false,
@@ -37,7 +35,6 @@ export const PRO_TIER_LIMITS: ProFeatureLimits = {
   canRemoveBranding: true,
   canUseAdvancedAnalytics: true,
   canUseWebLLM: true,
-  canUse3DBlocks: true,
   canUseCustomCSS: true,
   canUseLivePreview: true,
   canExportToAllPlatforms: true,
@@ -70,7 +67,6 @@ export const useProFeatures = () => {
     checkFeature,
     getUpgradeMessage,
     canUseWebLLM: isPro,
-    canUse3DBlocks: isPro,
     ...authProFeatures,
   };
 };
