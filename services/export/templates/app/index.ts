@@ -3,7 +3,7 @@
  */
 
 import { SiteData } from '../../../../types';
-import { ImageMap } from '../../imageExtractor';
+import { MediaMap } from '../../mediaExtractor';
 import { generateImports } from './imports';
 import { generateTypes } from './types';
 import { generateSocialPlatformsConfig } from './socialPlatforms';
@@ -18,9 +18,9 @@ import {
 } from './layouts';
 import { escapeHtml } from '../../helpers';
 
-export const generateAppTsx = (data: SiteData, imageMap: ImageMap, siteId?: string): string => {
+export const generateAppTsx = (data: SiteData, mediaMap: MediaMap, siteId?: string): string => {
   const { profile, blocks } = data;
-  const avatarSrc = imageMap['profile_avatar'] || profile.avatarUrl;
+  const avatarSrc = mediaMap['profile_avatar'] || profile.avatarUrl;
 
   // Avatar style configuration
   const avatarStyle = profile.avatarStyle || {
@@ -47,7 +47,7 @@ export const generateAppTsx = (data: SiteData, imageMap: ImageMap, siteId?: stri
   const blocksJson = JSON.stringify(
     blocks.map((b) => ({
       ...b,
-      imageUrl: b.imageUrl && imageMap[`block_${b.id}`] ? imageMap[`block_${b.id}`] : b.imageUrl,
+      imageUrl: b.imageUrl && mediaMap[`block_${b.id}`] ? mediaMap[`block_${b.id}`] : b.imageUrl,
     }))
   );
 

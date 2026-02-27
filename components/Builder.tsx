@@ -70,6 +70,7 @@ import { ProAnalyticsDashboard } from './ProAnalyticsDashboard';
 import { EditableWebsiteMode } from './EditableWebsiteMode';
 import WebLLMModal from './WebLLMModal';
 import { ThreeDBlock, ThreeDBlockPreview } from './ThreeDBlock';
+import { uploadMedia, formatFileSize } from '../utils/mediaUpload';
 
 interface BuilderProps {
   onBack?: () => void;

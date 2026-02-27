@@ -129,7 +129,7 @@ const Block = ({ block }: { block: BlockData }) => {
         <div className="w-full h-full relative z-10">
           {block.type === BlockType.MEDIA && block.imageUrl ? (
             <div className="w-full h-full relative overflow-hidden">
-              {/\\.(mp4|webm|ogg|mov)$/i.test(block.imageUrl) ? (
+              {block.imageUrl.startsWith('data:video') || /\\.(mp4|webm|ogg|mov)$/i.test(block.imageUrl) ? (
                 <video src={block.imageUrl} className="full-img" style={{ objectPosition: \`\${mediaPos.x}% \${mediaPos.y}%\` }} autoPlay loop muted playsInline />
               ) : (
                 <img src={block.imageUrl} alt={block.title || ''} className="full-img" style={{ objectPosition: \`\${mediaPos.x}% \${mediaPos.y}%\` }} />
