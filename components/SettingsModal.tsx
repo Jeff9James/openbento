@@ -52,7 +52,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onBlocksChange,
 }) => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const ogImageInputRef = useRef<HTMLInputElement>(null);
   const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null);
+  const [pendingOgImageSrc, setPendingOgImageSrc] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('general');
 
   // Social accounts state
@@ -976,7 +978,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         type="url"
                         value={
                           profile.openGraph?.image?.startsWith('data:')
-                            ? ''
+                            ? '(uploaded image)'
                             : profile.openGraph?.image || ''
                         }
                         onChange={(e) =>
@@ -987,36 +989,39 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         }
                         placeholder="https://example.com/image.png"
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={profile.openGraph?.image?.startsWith('data:')}
                       />
-                      <label
+                      <input
+                        ref={ogImageInputRef}
+                        type="file"
+                        accept="image/*"
+                        aria-label="Upload OpenGraph image"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              setPendingOgImageSrc(reader.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                          try {
+                            e.target.value = '';
+                          } catch {
+                            // ignore
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => ogImageInputRef.current?.click()}
                         className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg cursor-pointer transition-colors flex items-center gap-2 text-sm font-medium text-gray-700"
-                        title="Upload image"
+                        title="Upload and crop image"
                       >
                         <Upload size={16} />
                         <span>Upload</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          aria-label="Upload OpenGraph image"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = () => {
-                                setProfile({
-                                  ...profile,
-                                  openGraph: {
-                                    ...profile.openGraph,
-                                    image: reader.result as string,
-                                  },
-                                });
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
-                      </label>
+                      </button>
                       {profile.openGraph?.image && (
                         <button
                           type="button"
@@ -1034,7 +1039,41 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         </button>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400">Recommended size: 1200x630 pixels</p>
+                    <p className="text-xs text-gray-400">
+                      Recommended size: 1200×630 pixels. Upload an image to crop to the ideal aspect ratio.
+                    </p>
+                    {/* Quick actions */}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {profile.avatarUrl && profile.avatarUrl !== AVATAR_PLACEHOLDER && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (profile.avatarUrl?.startsWith('data:')) {
+                              setPendingOgImageSrc(profile.avatarUrl);
+                            } else {
+                              setProfile({
+                                ...profile,
+                                openGraph: { ...profile.openGraph, image: profile.avatarUrl },
+                              });
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
+                        >
+                          <User size={12} />
+                          Use avatar
+                        </button>
+                      )}
+                      {profile.openGraph?.image?.startsWith('data:') && (
+                        <button
+                          type="button"
+                          onClick={() => setPendingOgImageSrc(profile.openGraph?.image || null)}
+                          className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
+                        >
+                          <Settings size={12} />
+                          Re-crop
+                        </button>
+                      )}
+                    </div>
                     {profile.openGraph?.image && (
                       <div className="mt-2 p-2 bg-gray-50 rounded-lg">
                         <img
@@ -1482,6 +1521,22 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             onConfirm={(dataUrl) => {
               setProfile((prev) => ({ ...prev, avatarUrl: dataUrl }));
               setPendingAvatarSrc(null);
+            }}
+          />
+
+          <ImageCropModal
+            isOpen={!!pendingOgImageSrc}
+            src={pendingOgImageSrc || ''}
+            title="Crop social sharing image"
+            aspectRatio={1200 / 630}
+            outputWidth={1200}
+            onCancel={() => setPendingOgImageSrc(null)}
+            onConfirm={(dataUrl) => {
+              setProfile((prev) => ({
+                ...prev,
+                openGraph: { ...prev.openGraph, image: dataUrl },
+              }));
+              setPendingOgImageSrc(null);
             }}
           />
         </motion.div>

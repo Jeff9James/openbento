@@ -9,10 +9,13 @@ type ImageCropModalProps = {
   title?: string;
   onCancel: () => void;
   onConfirm: (dataUrl: string) => void;
+  /** Aspect ratio for the crop (width/height). Default: 1 (square) */
+  aspectRatio?: number;
+  /** Output width in pixels. Height is calculated from aspectRatio. Default: 512 */
+  outputWidth?: number;
 };
 
-const CROP_SIZE = 320; // preview box size (px)
-const OUTPUT_SIZE = 512; // exported avatar size (px)
+const CROP_SIZE = 320; // preview box height (px)
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.05;
@@ -25,7 +28,32 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
   title,
   onCancel,
   onConfirm,
+  aspectRatio = 1,
+  outputWidth = 512,
 }) => {
+  const aspectRatioRef = useRef(aspectRatio);
+  const outputWidthRef = useRef(outputWidth);
+
+  // Keep refs in sync with props
+  useEffect(() => {
+    aspectRatioRef.current = aspectRatio;
+    outputWidthRef.current = outputWidth;
+  }, [aspectRatio, outputWidth]);
+
+  // Calculate crop box dimensions based on aspect ratio
+  const cropBox = useMemo(() => {
+    const height = CROP_SIZE;
+    const width = CROP_SIZE * aspectRatio;
+    return { width, height };
+  }, [aspectRatio]);
+
+  const outputSize = useMemo(() => {
+    return {
+      width: outputWidth,
+      height: Math.round(outputWidth / aspectRatio),
+    };
+  }, [aspectRatio, outputWidth]);
+
   const sourceImageRef = useRef<HTMLImageElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const dragRef = useRef<{
@@ -103,8 +131,8 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
 
   const baseScale = useMemo(() => {
     if (!natural) return 1;
-    return Math.max(CROP_SIZE / natural.w, CROP_SIZE / natural.h);
-  }, [natural]);
+    return Math.max(cropBox.width / natural.w, cropBox.height / natural.h);
+  }, [natural, cropBox]);
 
   const scale = baseScale * zoom;
 
@@ -116,14 +144,14 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
   const clampOffset = useCallback(
     (next: { x: number; y: number }) => {
       if (!natural) return { x: 0, y: 0 };
-      const maxX = Math.max(0, (displayed.w - CROP_SIZE) / 2);
-      const maxY = Math.max(0, (displayed.h - CROP_SIZE) / 2);
+      const maxX = Math.max(0, (displayed.w - cropBox.width) / 2);
+      const maxY = Math.max(0, (displayed.h - cropBox.height) / 2);
       return {
         x: clamp(next.x, -maxX, maxX),
         y: clamp(next.y, -maxY, maxY),
       };
     },
-    [displayed.w, displayed.h, natural]
+    [displayed.w, displayed.h, natural, cropBox]
   );
 
   useEffect(() => {
@@ -304,25 +332,25 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
     if (!source || !natural) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = OUTPUT_SIZE;
-    canvas.height = OUTPUT_SIZE;
+    canvas.width = outputSize.width;
+    canvas.height = outputSize.height;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const topLeftX = CROP_SIZE / 2 - displayed.w / 2 + offset.x;
-    const topLeftY = CROP_SIZE / 2 - displayed.h / 2 + offset.y;
+    const topLeftX = cropBox.width / 2 - displayed.w / 2 + offset.x;
+    const topLeftY = cropBox.height / 2 - displayed.h / 2 + offset.y;
 
     const srcX = -topLeftX / scale;
     const srcY = -topLeftY / scale;
-    const srcW = CROP_SIZE / scale;
-    const srcH = CROP_SIZE / scale;
+    const srcW = cropBox.width / scale;
+    const srcH = cropBox.height / scale;
 
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+    ctx.fillRect(0, 0, outputSize.width, outputSize.height);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    ctx.drawImage(source, srcX, srcY, srcW, srcH, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+    ctx.drawImage(source, srcX, srcY, srcW, srcH, 0, 0, outputSize.width, outputSize.height);
 
     const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
     onConfirm(dataUrl);
@@ -343,7 +371,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
             initial={{ scale: 0.95, opacity: 0, y: 16 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 16 }}
-            className="bg-white rounded-3xl shadow-2xl max-w-xl w-full overflow-hidden ring-1 ring-gray-900/5"
+            className={`bg-white rounded-3xl shadow-2xl w-full overflow-hidden ring-1 ring-gray-900/5 ${aspectRatio > 1.5 ? 'max-w-3xl' : 'max-w-xl'}`}
             role="dialog"
             aria-modal="true"
             aria-label={title || 'Crop image'}
@@ -351,7 +379,9 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
             <div className="p-6 pb-4 flex justify-between items-start border-b border-gray-100">
               <div>
                 <h2 className="text-lg font-bold text-gray-900">{title || 'Crop photo'}</h2>
-                <p className="text-sm text-gray-500 mt-1">Drag to position, use zoom to crop.</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Drag to position, use zoom to crop. Output: {outputSize.width}×{outputSize.height}px
+                </p>
               </div>
               <button
                 onClick={onCancel}
@@ -363,10 +393,10 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({
             </div>
 
             <div className="p-6 space-y-5">
-              <div className="flex items-start justify-center">
+              <div className="flex items-start justify-center overflow-x-auto">
                 <div
-                  className="relative bg-gray-100 border border-gray-200 rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing"
-                  style={{ width: CROP_SIZE, height: CROP_SIZE, touchAction: 'none' }}
+                  className="relative bg-gray-100 border border-gray-200 rounded-3xl overflow-hidden cursor-grab active:cursor-grabbing flex-shrink-0"
+                  style={{ width: cropBox.width, height: cropBox.height, touchAction: 'none' }}
                   onPointerDown={onPointerDown}
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
