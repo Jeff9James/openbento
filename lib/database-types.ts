@@ -14,9 +14,9 @@ export interface DbUserProfile {
   display_name: string | null;
   avatar_url: string | null;
   subscription_tier: SubscriptionTier;
-  subscription_status: 'active' | 'inactive' | 'canceled' | 'past_due';
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
+  subscription_status: 'active' | 'inactive' | 'canceled' | 'past_due' | 'paused';
+  dodo_customer_id: string | null;
+  dodo_subscription_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -72,7 +72,7 @@ export interface AuthUser {
   displayName: string | null;
   avatarUrl: string | null;
   subscriptionTier: SubscriptionTier;
-  subscriptionStatus: 'active' | 'inactive' | 'canceled' | 'past_due';
+  subscriptionStatus: 'active' | 'inactive' | 'canceled' | 'past_due' | 'paused';
 }
 
 // Convert Supabase user + profile to AuthUser

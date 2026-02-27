@@ -16,9 +16,9 @@ create table if not exists public.user_profiles (
   
   -- Subscription fields
   subscription_tier text not null default 'free' check (subscription_tier in ('free', 'pro')),
-  subscription_status text not null default 'inactive' check (subscription_status in ('active', 'inactive', 'canceled', 'past_due')),
-  stripe_customer_id text,
-  stripe_subscription_id text,
+  subscription_status text not null default 'inactive' check (subscription_status in ('active', 'inactive', 'canceled', 'past_due', 'paused')),
+  dodo_customer_id text,
+  dodo_subscription_id text,
   
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -43,7 +43,7 @@ create policy "Allow insert during signup"
 
 -- Index for faster lookups
 create index if not exists user_profiles_email_idx on public.user_profiles(email);
-create index if not exists user_profiles_stripe_customer_idx on public.user_profiles(stripe_customer_id);
+create index if not exists user_profiles_dodo_customer_idx on public.user_profiles(dodo_customer_id);
 
 -- ============================================
 -- PROJECTS TABLE
@@ -224,5 +224,6 @@ create policy "Users can delete their own assets"
 -- EDGE FUNCTION SECRETS (SET MANUALLY)
 -- ============================================
 -- Run this in your terminal after deploying:
--- supabase secrets set STRIPE_SECRET_KEY=your_stripe_secret_key
--- supabase secrets set STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+-- supabase secrets set DODO_PAYMENTS_API_KEY=your_dodo_api_key
+-- supabase secrets set DODO_PAYMENTS_WEBHOOK_KEY=your_dodo_webhook_secret
+-- supabase secrets set DODO_PAYMENTS_ENVIRONMENT=test_mode  # or live_mode
