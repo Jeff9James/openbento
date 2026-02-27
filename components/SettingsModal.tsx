@@ -25,6 +25,7 @@ import {
   SOCIAL_PLATFORM_OPTIONS,
   formatFollowerCount,
 } from '../socialPlatforms';
+import { uploadMedia, formatFileSize } from '../utils/mediaUpload';
 
 type SettingsModalProps = {
   isOpen: boolean;

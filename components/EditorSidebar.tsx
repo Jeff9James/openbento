@@ -26,6 +26,8 @@ import {
   Box,
   BarChart3,
   Code,
+  Image as ImageIcon2,
+  Video,
 } from 'lucide-react';
 import {
   buildSocialUrl,
@@ -36,6 +38,7 @@ import {
   normalizeSocialHandle,
   SOCIAL_PLATFORM_OPTIONS,
 } from '../socialPlatforms';
+import { uploadMedia, formatFileSize, getMediaTypeFromDataUrl } from '../utils/mediaUpload';
 
 interface EditorSidebarProps {
   profile: UserProfile;
@@ -58,16 +61,40 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
 }) => {
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<{
+    type: 'success' | 'error' | 'loading';
+    message: string;
+  } | null>(null);
 
-  const handleBlockImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBlockMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && editingBlock) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateBlock({ ...editingBlock, imageUrl: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+    if (!file || !editingBlock) return;
+
+    setUploadStatus({ type: 'loading', message: 'Uploading...' });
+
+    const result = await uploadMedia(file, {
+      maxImageSize: 5,
+      maxVideoSize: 10,
+      compressImages: true,
+    });
+
+    if (result.success && result.dataUrl) {
+      updateBlock({ ...editingBlock, imageUrl: result.dataUrl });
+      const sizeInfo = result.compressedSize
+        ? ` (${formatFileSize(result.originalSize || 0)} → ${formatFileSize(result.compressedSize)})`
+        : '';
+      setUploadStatus({
+        type: 'success',
+        message: `${result.mediaType === 'video' ? 'Video' : 'Image'} uploaded${sizeInfo}`,
+      });
+      // Clear success message after 3 seconds
+      setTimeout(() => setUploadStatus(null), 3000);
+    } else {
+      setUploadStatus({ type: 'error', message: result.error || 'Upload failed' });
     }
+
+    // Reset input
+    e.target.value = '';
   };
 
   const isYouTubeActive =
@@ -738,39 +765,93 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({
                 editingBlock.type === BlockType.MEDIA ||
                 editingBlock.type === BlockType.MAP) && (
                 <div>
-                  {/* Image Upload for Block */}
+                  {/* Media Upload for Block */}
                   {(editingBlock.type === BlockType.MEDIA ||
                     editingBlock.type === BlockType.LINK) && (
                     <div className="mb-4">
                       <label
-                        htmlFor="block-img-upload"
+                        htmlFor="block-media-upload"
                         className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2"
                       >
-                        Upload Image{' '}
-                        {editingBlock.type === BlockType.LINK ? '(Optional Background)' : ''}
+                        {editingBlock.type === BlockType.MEDIA
+                          ? 'Upload Media (Image or Video)'
+                          : 'Upload Image (Optional Background)'}
                       </label>
                       <label
-                        htmlFor="block-img-upload"
-                        className="relative group cursor-pointer border-2 border-dashed border-gray-300 rounded-xl p-4 hover:border-black transition-colors block"
-                        aria-label="Upload block image"
+                        htmlFor="block-media-upload"
+                        className={`relative group cursor-pointer border-2 border-dashed rounded-xl p-4 transition-colors block ${
+                          uploadStatus?.type === 'error'
+                            ? 'border-red-400 bg-red-50'
+                            : uploadStatus?.type === 'success'
+                              ? 'border-green-400 bg-green-50'
+                              : 'border-gray-300 hover:border-black'
+                        }`}
+                        aria-label="Upload media file"
                       >
                         <input
-                          id="block-img-upload"
+                          id="block-media-upload"
                           type="file"
                           className="sr-only"
-                          accept="image/*"
-                          onChange={handleBlockImageUpload}
+                          accept={
+                            editingBlock.type === BlockType.MEDIA
+                              ? 'image/*,video/*'
+                              : 'image/*'
+                          }
+                          onChange={handleBlockMediaUpload}
+                          disabled={uploadStatus?.type === 'loading'}
                         />
                         <div className="flex flex-col items-center gap-2 text-gray-500">
-                          <Upload size={20} />
-                          <span className="text-xs">Click to upload</span>
+                          {uploadStatus?.type === 'loading' ? (
+                            <Loader2 size={20} className="animate-spin" />
+                          ) : editingBlock.type === BlockType.MEDIA ? (
+                            <div className="flex gap-2">
+                              <ImageIcon2 size={20} />
+                              <Video size={20} />
+                            </div>
+                          ) : (
+                            <ImageIcon2 size={20} />
+                          )}
+                          <span className="text-xs text-center">
+                            {uploadStatus?.message ||
+                              (editingBlock.type === BlockType.MEDIA
+                                ? 'Click to upload image or video'
+                                : 'Click to upload image')}
+                          </span>
+                          {editingBlock.type === BlockType.MEDIA && !uploadStatus && (
+                            <span className="text-[10px] text-gray-400">
+                              Max: 5MB images, 10MB videos
+                            </span>
+                          )}
                         </div>
-                        {editingBlock.imageUrl && (
-                          <div className="mt-2 text-[10px] text-green-600 font-medium text-center">
-                            Image Selected
-                          </div>
-                        )}
                       </label>
+                      {/* Media preview */}
+                      {editingBlock.imageUrl && !uploadStatus && (
+                        <div className="mt-3">
+                          {getMediaTypeFromDataUrl(editingBlock.imageUrl) === 'video' ? (
+                            <div className="relative rounded-lg overflow-hidden border border-gray-200">
+                              <video
+                                src={editingBlock.imageUrl}
+                                className="w-full h-24 object-cover"
+                                muted
+                              />
+                              <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded">
+                                Video
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="relative rounded-lg overflow-hidden border border-gray-200 h-24">
+                              <img
+                                src={editingBlock.imageUrl}
+                                alt="Preview"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded">
+                                Image
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 

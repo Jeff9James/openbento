@@ -20,8 +20,8 @@ import {
 // Template generators
 import { generateIndexHtml, generateMainTsx, generateIndexCSS, generateAppTsx } from './templates';
 
-// Image extraction
-import { extractImages } from './imageExtractor';
+// Media extraction (images and videos)
+import { extractMedia, MediaMap } from './mediaExtractor';
 
 // Deployment configs
 import {
@@ -51,8 +51,8 @@ export const exportSite = async (
   const assetsFolder = zip.folder('public/assets');
   const srcFolder = zip.folder('src');
 
-  // Extract base64 images and get mapping
-  const imageMap = extractImages(data, assetsFolder);
+  // Extract base64 media (images and videos) and get mapping
+  const mediaMap = extractMedia(data, assetsFolder);
 
   const deploymentTarget: ExportDeploymentTarget = opts?.deploymentTarget ?? 'vercel';
 
@@ -68,7 +68,7 @@ export const exportSite = async (
   // Source files
   srcFolder?.file('main.tsx', generateMainTsx());
   srcFolder?.file('index.css', generateIndexCSS());
-  srcFolder?.file('App.tsx', generateAppTsx(data, imageMap, opts?.siteId));
+  srcFolder?.file('App.tsx', generateAppTsx(data, mediaMap, opts?.siteId));
 
   // Deployment-specific configuration files
   switch (deploymentTarget) {

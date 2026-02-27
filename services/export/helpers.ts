@@ -35,3 +35,22 @@ export const escapeHtml = (value: string | undefined | null): string => {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 };
+
+/**
+ * Extract file extension from MIME type
+ */
+export function getExtensionFromMimeType(mimeType: string): string {
+  const extensions: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'image/svg+xml': 'svg',
+    'image/avif': 'avif',
+    'video/mp4': 'mp4',
+    'video/webm': 'webm',
+    'video/ogg': 'ogv',
+    'video/quicktime': 'mov',
+  };
+  return extensions[mimeType] || 'bin';
+}
