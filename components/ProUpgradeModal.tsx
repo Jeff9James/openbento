@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Crown, Check, Zap, Shield, Globe, Sparkles, Loader2, CreditCard, Lock } from 'lucide-react';
-import { createCheckoutSession, PRICING, isStripeConfigured } from '../lib/stripe';
+import { createCheckoutSession, PRICING, isDodoConfigured } from '../lib/dodo';
 import { useAuth } from '../lib/AuthContext';
 
 interface ProUpgradeModalProps {
@@ -57,7 +57,7 @@ export default function ProUpgradeModal({ isOpen, onClose }: ProUpgradeModalProp
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly');
-  const stripeConfigured = isStripeConfigured();
+  const dodoConfigured = isDodoConfigured();
 
   const handleUpgrade = async () => {
     if (!isAuthenticated) {
@@ -65,7 +65,7 @@ export default function ProUpgradeModal({ isOpen, onClose }: ProUpgradeModalProp
       return;
     }
 
-    if (!stripeConfigured) {
+    if (!dodoConfigured) {
       setError('Payment system is currently being set up. Please try again later.');
       return;
     }
@@ -74,21 +74,21 @@ export default function ProUpgradeModal({ isOpen, onClose }: ProUpgradeModalProp
     setError(null);
 
     try {
-      const priceId =
+      const productId =
         billingInterval === 'monthly'
-          ? PRICING.PRO_MONTHLY.priceId
-          : PRICING.PRO_YEARLY.priceId;
+          ? PRICING.PRO_MONTHLY.productId
+          : PRICING.PRO_YEARLY.productId;
 
-      if (!priceId) {
-        setError('Price configuration not found. Please contact support.');
+      if (!productId) {
+        setError('Product configuration not found. Please contact support.');
         setIsLoading(false);
         return;
       }
 
-      const session = await createCheckoutSession(priceId, user?.email);
+      const session = await createCheckoutSession(productId, user?.email);
 
-      if (session?.url) {
-        window.location.href = session.url;
+      if (session?.checkout_url) {
+        window.location.href = session.checkout_url;
       } else {
         setError('Failed to start checkout. Please try again.');
       }
@@ -244,16 +244,16 @@ export default function ProUpgradeModal({ isOpen, onClose }: ProUpgradeModalProp
               </div>
             )}
 
-            {!stripeConfigured && (
+            {!dodoConfigured && (
               <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl text-blue-800 text-sm">
-                Stripe payment system is being configured. Contact support to upgrade.
+                DodoPayments is being configured. Contact support to upgrade.
               </div>
             )}
 
             {/* Upgrade Button */}
             <button
               onClick={handleUpgrade}
-              disabled={isLoading || !isAuthenticated || !stripeConfigured}
+              disabled={isLoading || !isAuthenticated || !dodoConfigured}
               className="w-full py-4 bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 text-white rounded-xl font-semibold text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
@@ -270,7 +270,7 @@ export default function ProUpgradeModal({ isOpen, onClose }: ProUpgradeModalProp
             </button>
 
             <p className="text-center text-xs text-gray-500 mt-4">
-              Secure payment powered by Stripe. Cancel anytime. No questions asked.
+              Secure payment powered by DodoPayments. Cancel anytime. No questions asked.
             </p>
           </div>
         </motion.div>

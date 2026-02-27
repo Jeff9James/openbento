@@ -15,8 +15,8 @@ export interface DbUserProfile {
   avatar_url: string | null;
   subscription_tier: SubscriptionTier;
   subscription_status: 'active' | 'inactive' | 'canceled' | 'past_due';
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
+  dodo_customer_id: string | null;
+  dodo_subscription_id: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -1,26 +1,17 @@
-import { loadStripe, Stripe } from '@stripe/stripe-js';
-
-let stripePromise: Promise<Stripe | null> | null = null;
-
-export const getStripe = (): Promise<Stripe | null> => {
-  if (!stripePromise) {
-    const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-    if (!publishableKey) {
-      console.warn('Stripe publishable key not found');
-      return Promise.resolve(null);
-    }
-    stripePromise = loadStripe(publishableKey);
-  }
-  return stripePromise;
-};
+// DodoPayments Integration Service
+// This service handles checkout session creation and customer portal access
 
 export interface CheckoutSessionResponse {
-  sessionId: string;
+  session_id: string;
+  checkout_url: string;
+}
+
+export interface PortalSessionResponse {
   url: string;
 }
 
 export const createCheckoutSession = async (
-  priceId: string,
+  productId: string,
   customerEmail?: string
 ): Promise<CheckoutSessionResponse | null> => {
   try {
@@ -32,7 +23,7 @@ export const createCheckoutSession = async (
     }
 
     const response = await fetch(
-      `${supabaseUrl}/functions/v1/stripe-create-checkout`,
+      `${supabaseUrl}/functions/v1/dodo-create-checkout`,
       {
         method: 'POST',
         headers: {
@@ -40,7 +31,7 @@ export const createCheckoutSession = async (
           Authorization: `Bearer ${anonKey}`,
         },
         body: JSON.stringify({
-          priceId,
+          productId,
           customerEmail,
           successUrl: `${window.location.origin}/?checkout=success`,
           cancelUrl: `${window.location.origin}/?checkout=cancel`,
@@ -62,7 +53,7 @@ export const createCheckoutSession = async (
 
 export const createPortalSession = async (
   customerId: string
-): Promise<{ url: string } | null> => {
+): Promise<PortalSessionResponse | null> => {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -72,7 +63,7 @@ export const createPortalSession = async (
     }
 
     const response = await fetch(
-      `${supabaseUrl}/functions/v1/stripe-create-portal`,
+      `${supabaseUrl}/functions/v1/dodo-create-portal`,
       {
         method: 'POST',
         headers: {
@@ -98,15 +89,17 @@ export const createPortalSession = async (
   }
 };
 
+// Pricing configuration for DodoPayments products
+// Create these products in your DodoPayments dashboard and copy the product IDs
 export const PRICING = {
   PRO_MONTHLY: {
-    priceId: import.meta.env.VITE_STRIPE_PRO_MONTHLY_PRICE_ID || '',
+    productId: import.meta.env.VITE_DODO_PRO_MONTHLY_PRODUCT_ID || '',
     amount: 9,
     interval: 'month',
     name: 'Pro Monthly',
   },
   PRO_YEARLY: {
-    priceId: import.meta.env.VITE_STRIPE_PRO_YEARLY_PRICE_ID || '',
+    productId: import.meta.env.VITE_DODO_PRO_YEARLY_PRODUCT_ID || '',
     amount: 79,
     interval: 'year',
     name: 'Pro Yearly',
@@ -114,9 +107,11 @@ export const PRICING = {
   },
 };
 
-export const isStripeConfigured = (): boolean => {
+// Check if DodoPayments is properly configured
+export const isDodoConfigured = (): boolean => {
   return !!(
-    import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY &&
+    import.meta.env.VITE_DODO_PRO_MONTHLY_PRODUCT_ID &&
+    import.meta.env.VITE_DODO_PRO_YEARLY_PRODUCT_ID &&
     import.meta.env.VITE_SUPABASE_URL &&
     import.meta.env.VITE_SUPABASE_ANON_KEY
   );

@@ -10,8 +10,6 @@ const STATIC_ASSETS = [
 
 const RUNTIME_CACHE = 'openbento-runtime-v1';
 
-declare const self: ServiceWorkerGlobalScope;
-
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -119,5 +117,3 @@ self.addEventListener('message', (event) => {
     });
   }
 });
-
-export {};
