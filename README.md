@@ -43,6 +43,20 @@ Track visits with your own Supabase instance:
 
 See [ANALYTICS.md](ANALYTICS.md) for setup instructions.
 
+### 💰 Monetization with ZeroClick.ai (Optional)
+
+OpenBento integrates with [ZeroClick.ai](https://zeroclick.ai) - an AI-native advertising platform - to show relevant ads to free-tier users. Pro users get an ad-free experience.
+
+To enable ZeroClick ads:
+1. Sign up at [developer.zeroclick.ai](https://developer.zeroclick.ai/)
+2. Create an API key in your dashboard
+3. Add your API key to the `.env` file:
+   ```
+   VITE_ZEROCLICK_API_KEY=your-zeroclick-api-key
+   ```
+
+**Note:** Google AdSense support has been removed in favor of ZeroClick.ai for better privacy and AI-native ad experiences.
+
 ### 🌐 26+ Social Platforms Supported
 
 X (Twitter), Instagram, TikTok, YouTube, GitHub, GitLab, LinkedIn, Facebook, Twitch, Dribbble, Medium, Dev.to, Reddit, Pinterest, Threads, Bluesky, Mastodon, Substack, Patreon, Ko-fi, Buy Me a Coffee, Snapchat, Discord, Telegram, WhatsApp, and custom links.
