@@ -1,58 +1,62 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Primary Meta Tags -->
-    <title>OpenBento - Create Beautiful Link-in-Bio Pages</title>
-    <meta name="title" content="OpenBento - Create Beautiful Link-in-Bio Pages" />
-    <meta name="description" content="OpenBento is a free, open-source bento grid generator for creating stunning link-in-bio pages. Perfect for creators, small businesses, and influencers. No account required." />
-    <meta name="author" content="OpenBento" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://openbento.app/" />
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://openbento.app/" />
-    <meta property="og:title" content="OpenBento - Create Beautiful Link-in-Bio Pages" />
-    <meta property="og:description" content="Free, open-source bento grid builder for link-in-bio pages. Drag-and-drop interface, 7+ block types, AI-powered content generation. No account required." />
-    <meta property="og:image" content="https://openbento.app/og-image.png" />
-    <meta property="og:site_name" content="OpenBento" />
-    <meta property="og:locale" content="en_US" />
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://openbento.app/" />
-    <meta property="twitter:title" content="OpenBento - Create Beautiful Link-in-Bio Pages" />
-    <meta property="twitter:description" content="Free, open-source bento grid builder for link-in-bio pages. Drag-and-drop interface, 7+ block types, AI-powered content generation." />
-    <meta property="twitter:image" content="https://openbento.app/og-image.png" />
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#4F46E5" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="OpenBento" />
-    <meta name="application-name" content="OpenBento" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Preconnect to external resources -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://esm.sh" />
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    
-    <!-- Structured Data (JSON-LD) -->
-    <script type="application/ld+json">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Primary Meta Tags -->
+  <title>OpenBento - Create Beautiful Link-in-Bio Pages</title>
+  <meta name="title" content="OpenBento - Create Beautiful Link-in-Bio Pages" />
+  <meta name="description"
+    content="OpenBento is a free, open-source bento grid generator for creating stunning link-in-bio pages. Perfect for creators, small businesses, and influencers. No account required." />
+  <meta name="author" content="OpenBento" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://openbento.app/" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://openbento.app/" />
+  <meta property="og:title" content="OpenBento - Create Beautiful Link-in-Bio Pages" />
+  <meta property="og:description"
+    content="Free, open-source bento grid builder for link-in-bio pages. Drag-and-drop interface, 7+ block types, AI-powered content generation. No account required." />
+  <meta property="og:image" content="https://openbento.app/og-image.png" />
+  <meta property="og:site_name" content="OpenBento" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://openbento.app/" />
+  <meta property="twitter:title" content="OpenBento - Create Beautiful Link-in-Bio Pages" />
+  <meta property="twitter:description"
+    content="Free, open-source bento grid builder for link-in-bio pages. Drag-and-drop interface, 7+ block types, AI-powered content generation." />
+  <meta property="twitter:image" content="https://openbento.app/og-image.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#4F46E5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="OpenBento" />
+  <meta name="application-name" content="OpenBento" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Preconnect to external resources -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://esm.sh" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
@@ -84,105 +88,116 @@
       "softwareVersion": "1.0.0"
     }
     </script>
-    
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
 
-      /* Enhanced focus states for accessibility */
-      *:focus-visible {
-        outline: 3px solid #6366f1;
-        outline-offset: 2px;
-      }
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
 
-      /* Larger touch targets for mobile and accessibility */
-      button, a, input, textarea, select {
-        min-height: 44px;
-        min-width: 44px;
-      }
+    /* Enhanced focus states for accessibility */
+    *:focus-visible {
+      outline: 3px solid #6366f1;
+      outline-offset: 2px;
+    }
 
-      /* Skip link for keyboard navigation */
-      .skip-link {
-        position: absolute;
-        top: -40px;
-        left: 0;
-        background: #4F46E5;
-        color: white;
-        padding: 8px 16px;
-        z-index: 100;
-        transition: top 0.3s;
-      }
-      
-      .skip-link:focus {
-        top: 0;
-      }
+    /* Larger touch targets for mobile and accessibility */
+    button,
+    a,
+    input,
+    textarea,
+    select {
+      min-height: 44px;
+      min-width: 44px;
+    }
 
-      /* Hide scrollbar for cleaner UI in sidebar */
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
+    /* Skip link for keyboard navigation */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #4F46E5;
+      color: white;
+      padding: 8px 16px;
+      z-index: 100;
+      transition: top 0.3s;
+    }
 
-      /* React Tooltip custom styles */
-      .react-tooltip {
-        font-size: 14px !important;
-        font-weight: 600 !important;
-        padding: 10px 16px !important;
-        border-radius: 10px !important;
-        max-width: 300px !important;
-        z-index: 9999 !important;
-      }
-      
-      /* High contrast tooltip for accessibility */
-      .react-tooltip-light {
-        background-color: #1f2937 !important;
-        color: #fff !important;
-      }
+    .skip-link:focus {
+      top: 0;
+    }
 
-      /* Reduced motion preference */
-      @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-        }
+    /* Hide scrollbar for cleaner UI in sidebar */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* React Tooltip custom styles */
+    .react-tooltip {
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      padding: 10px 16px !important;
+      border-radius: 10px !important;
+      max-width: 300px !important;
+      z-index: 9999 !important;
+    }
+
+    /* High contrast tooltip for accessibility */
+    .react-tooltip-light {
+      background-color: #1f2937 !important;
+      color: #fff !important;
+    }
+
+    /* Reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
       }
-    </style>
-    
-    <script type="importmap">
+    }
+  </style>
+
+  <script type="importmap">
     {
       "imports": {
         "file-saver": "https://esm.sh/file-saver@^2.0.5",
         "jszip": "https://esm.sh/jszip@^3.10.1",
-        "react/": "https://esm.sh/react@^19.2.3/",
-        "react": "https://esm.sh/react@^19.2.3",
-        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+        "react/": "https://esm.sh/react@^18.3.1/",
+        "react": "https://esm.sh/react@^18.3.1",
+        "react-dom/": "https://esm.sh/react-dom@^18.3.1/",
         "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
         "framer-motion": "https://esm.sh/framer-motion@^11.0.0"
       }
     }
     </script>
-  </head>
-  <body class="bg-gray-50 text-gray-900 overflow-x-hidden">
-    <!-- Skip link for accessibility -->
-    <a href="#main-content" class="skip-link">Skip to main content</a>
-    
-    <div id="root" role="application" aria-label="OpenBento Builder"></div>
-    <script type="module" src="/index.tsx"></script>
-    
-    <!-- Fallback for no-JS users -->
-    <noscript>
-      <div style="padding: 40px; text-align: center; font-family: system-ui, sans-serif;">
-        <h1 style="color: #4F46E5; margin-bottom: 16px;">OpenBento requires JavaScript</h1>
-        <p>Please enable JavaScript to use OpenBento. It&apos;s a powerful bento grid builder for creating beautiful link-in-bio pages.</p>
-        <p style="margin-top: 16px; color: #6B7280;">For assistance, please contact support@openbento.app</p>
-      </div>
-    </noscript>
-  </body>
+</head>
+
+<body class="bg-gray-50 text-gray-900 overflow-x-hidden">
+  <!-- Skip link for accessibility -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <div id="root" role="application" aria-label="OpenBento Builder"></div>
+  <script type="module" src="/index.tsx"></script>
+
+  <!-- Fallback for no-JS users -->
+  <noscript>
+    <div style="padding: 40px; text-align: center; font-family: system-ui, sans-serif;">
+      <h1 style="color: #4F46E5; margin-bottom: 16px;">OpenBento requires JavaScript</h1>
+      <p>Please enable JavaScript to use OpenBento. It&apos;s a powerful bento grid builder for creating beautiful
+        link-in-bio pages.</p>
+      <p style="margin-top: 16px; color: #6B7280;">For assistance, please contact support@openbento.app</p>
+    </div>
+  </noscript>
+</body>
+
 </html>
