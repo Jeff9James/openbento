@@ -42,12 +42,54 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Verify webhook signature (if provided by DodoPayments)
+    // Verify webhook signature
     const signature = req.headers.get("x-dodo-signature");
     const body = await req.text();
 
-    // Note: Implement signature verification based on DodoPayments documentation
-    // For now, we'll proceed with the payload
+    if (!signature) {
+      console.error("Missing webhook signature");
+      return new Response(
+        JSON.stringify({ error: "Missing signature" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify the signature using HMAC-SHA256
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(DODO_WEBHOOK_KEY),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+    const signatureBytes = await crypto.subtle.sign("HMAC", key, encoder.encode(body));
+    const expectedSignature = Array.from(new Uint8Array(signatureBytes))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    // Timing-safe comparison to prevent timing attacks
+    let isValid = false;
+    if (signature.length === expectedSignature.length) {
+      isValid = true;
+      for (let i = 0; i < signature.length; i++) {
+        if (signature[i] !== expectedSignature[i]) {
+          isValid = false;
+          break;
+        }
+      }
+    }
+
+    if (!isValid) {
+      console.error("Invalid webhook signature");
+      return new Response(
+        JSON.stringify({ error: "Invalid signature" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Webhook signature verified successfully");
+
     const event: DodoWebhookEvent = JSON.parse(body);
 
     // Initialize Supabase client with service role key for admin access
