@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import { AuthProvider } from './lib/AuthContext';
 import { COMMON_BLOCK_CSS } from './services/commonStyles';
+import './src/index.css';
 
 // Inject common CSS for blocks
 const styleEl = document.createElement('style');
@@ -17,7 +18,7 @@ if ('serviceWorker' in navigator) {
       .register('/sw.js')
       .then((registration) => {
         console.log('SW registered:', registration.scope);
-        
+
         // Check for updates
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;

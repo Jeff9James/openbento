@@ -9,6 +9,7 @@ import react from '@vitejs/plugin-react';
 import mdx from '@mdx-js/rollup';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import tailwindcss from '@tailwindcss/vite';
 
 const execFileAsync = promisify(execFile);
 
@@ -753,6 +754,7 @@ export default defineConfig(({ mode }) => {
         rehypePlugins: [rehypeHighlight],
       }),
       react(),
+      tailwindcss(),
       simpleSupabaseSetupPlugin(),
       openbentoSupabaseDevPlugin(),
     ],
