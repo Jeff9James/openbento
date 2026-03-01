@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { PublishedSite, getPublishedSiteBySubdomain } from '../services/publicationService';
 import Block from './Block';
 import { BlockData, UserProfile } from '../types';
@@ -62,20 +61,18 @@ const themeColors: Record<string, string> = {
 };
 
 const PublishedSitePage: React.FC<PublishedSitePageProps> = ({ subdomain: propSubdomain }) => {
-  const params = useParams();
   const [site, setSite] = useState<PublishedSite | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const subdomain = propSubdomain || params.subdomain;
-    if (!subdomain) {
+    if (!propSubdomain) {
       setError('No subdomain provided');
       setLoading(false);
       return;
     }
 
-    const publishedSite = getPublishedSiteBySubdomain(subdomain);
+    const publishedSite = getPublishedSiteBySubdomain(propSubdomain);
     if (!publishedSite) {
       setError('Site not found');
       setLoading(false);
@@ -84,7 +81,7 @@ const PublishedSitePage: React.FC<PublishedSitePageProps> = ({ subdomain: propSu
 
     setSite(publishedSite);
     setLoading(false);
-  }, [params.subdomain, propSubdomain]);
+  }, [propSubdomain]);
 
   if (loading) {
     return (
