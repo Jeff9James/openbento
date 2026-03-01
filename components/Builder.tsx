@@ -9,6 +9,7 @@ import OnboardingWizard from './OnboardingWizard';
 import FAQModal, { HelpChatBubble } from './FAQModal';
 import { useHistory } from '../hooks/useHistory';
 import { useSaveStatus } from '../hooks/useSaveStatus';
+import { useWindowSize } from '../hooks/useWindowSize';
 import AvatarStyleModal from './AvatarStyleModal';
 import AIGeneratorModal from './AIGeneratorModal';
 import TemplateGallery from './TemplateGallery';
@@ -34,6 +35,7 @@ import {
   Plus,
   Eye,
   Smartphone,
+  Menu,
   Monitor,
   Home,
   Globe,
@@ -416,7 +418,9 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const { isAuthenticated, isPro, user, isConfigured: isAuthConfigured } = useAuth();
   const { limits, checkFeature, canUseWebLLM, canUseLivePreview, canUseCustomCSS } = useProFeatures();
   const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null);
+ const { isMobile } = useWindowSize();
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
+ const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showFAQModal, setShowFAQModal] = useState(false);
@@ -1714,11 +1718,11 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
               {/* AI Generator */}
               <button
                 onClick={() => setShowAIGeneratorModal(true)}
-                className="bg-gradient-to-r from-violet-500 to-purple-600 text-white px-3.5 py-2 rounded-lg shadow-sm hover:from-violet-600 hover:to-purple-700 transition-all text-xs font-semibold flex items-center gap-2"
+                className="hidden md: bg-gradient-to-r from-violet-500 to-purple-600 text-white px-3.5 py-2 rounded-lg shadow-sm hover:from-violet-600 hover:to-purple-700 transition-all text-xs font-semibold flex items-center gap-2"
                 title="Generate with AI"
               >
                 <Sparkles size={16} />
-                <span className="hidden sm:inline">AI</span>
+                <span className="hidden lg:inline">AI</span>
               </button>
               {/* Pro Features */}
               <button
@@ -1727,7 +1731,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                 title={canUseLivePreview ? "Live Editor (Pro)" : "Upgrade to Pro for Live Editor"}
               >
                 <MousePointer2 size={16} />
-                <span className="hidden sm:inline">{canUseLivePreview ? "Live Editor" : "Pro"}</span>
+                <span className="hidden lg:inline">{canUseLivePreview ? "Live Editor" : "Pro"}</span>
               </button>
               <button
                 onClick={() => canUseWebLLM ? setShowWebLLMModal(true) : setShowProUpgradeModal(true)}
@@ -1735,7 +1739,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                 title={canUseWebLLM ? "AI Editor (Pro)" : "Upgrade to Pro for AI Editor"}
               >
                 <Cpu size={16} />
-                <span className="hidden sm:inline">AI Editor</span>
+                <span className="hidden lg:inline">AI Editor</span>
               </button>
 
               {/* Templates */}
@@ -1745,7 +1749,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                 title="Browse Templates"
               >
                 <Grid3X3 size={16} />
-                <span className="hidden sm:inline">Templates</span>
+                <span className="hidden md:inline">Templates</span>
               </button>
 
               {/* JSON Import/Export */}
@@ -1782,7 +1786,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                 className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-black transition-colors text-xs font-semibold flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <Download size={16} />
-                <span className="hidden sm:inline">Deploy</span>
+                <span className="hidden md:inline">Deploy</span>
               </button>
 
               {/* Publish / Launch Button */}
@@ -1793,7 +1797,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                 className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg shadow-sm hover:from-green-600 hover:to-emerald-700 transition-all text-xs font-semibold flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 <Rocket size={16} />
-                <span className="hidden sm:inline">Publish</span>
+                <span className="hidden md:inline">Publish</span>
               </button>
               
               {/* Auth Button */}
