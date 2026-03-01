@@ -1,0 +1,46 @@
+--- a/components/Builder.tsx
++++ b/components/Builder.tsx
+@@ -69,6 +69,7 @@ import { ProAnalyticsDashboard } from './ProAnalyticsDashboard';
+ import { EditableWebsiteMode } from './EditableWebsiteMode';
+ import WebLLMModal from './WebLLMModal';
++import DeployModal from './DeployModal';
+ import { uploadMedia, formatFileSize } from '../utils/mediaUpload';
+
+@@ -401,6 +402,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
+   const [showEditableWebsiteMode, setShowEditableWebsiteMode] = useState(false);
+   const [showWebLLMModal, setShowWebLLMModal] = useState(false);
+   const [showAccountSettingsModal, setShowAccountSettingsModal] = useState(false);
++  const [showPublishModal, setShowPublishModal] = useState(false);
+   const { isAuthenticated, isPro, user, isConfigured: isAuthConfigured } = useAuth();
+
+@@ -1685,6 +1687,20 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
+                 />
+               </label>
+             </div>
+
++            <button
++              type="button"
++              aria-label="Make site public"
++              onClick={() => setShowPublishModal(true)}
++              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg shadow-sm hover:from-green-600 hover:to-emerald-700 transition-all text-xs font-semibold flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
++            >
++              <Globe size={16} />
++              <span className="hidden sm:inline">Make Public</span>
++            </button>
++
+             <button
+               type="button"
+               aria-label="Deploy project"
+@@ -2572,6 +2588,13 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
+       </AnimatePresence>
+
+       {/* PUBLISH MODAL */}
++      <DeployModal
++        isOpen={showPublishModal}
++        onClose={() => setShowPublishModal(false)}
++        bento={activeBento}
++      />
++
+       {/* 5. ANALYTICS MODAL */}
+       <AnimatePresence>
+         {showAnalyticsModal && (
