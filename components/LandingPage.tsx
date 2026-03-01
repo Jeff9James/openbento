@@ -178,7 +178,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             </a>
 
             {/* Main Heading */}
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-8">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.05] mb-6 sm:mb-8">
               <span className="text-gray-900">Build your bento-style</span>
               <br />
               <span className="relative">
@@ -195,7 +195,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
               <span className="text-gray-900"> in minutes.</span>
             </h1>
 
-            <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed mb-10">
+            <p className="text-base sm:text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed mb-8 sm:mb-10">
               The open-source visual builder for stunning link-in-bio pages. Drag-and-drop editor,
               export to React/Vite/Tailwind, deploy anywhere. Your data stays yours — forever.
             </p>
@@ -206,24 +206,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-16"
           >
             <button
               onClick={onStart}
-              className="group h-14 px-8 rounded-2xl bg-gray-900 text-white font-semibold text-lg flex items-center gap-3 hover:bg-black transition-all shadow-xl hover:shadow-2xl hover:scale-[1.02]"
+              className="group h-12 sm:h-14 px-6 sm:px-8 rounded-2xl bg-gray-900 text-white font-semibold text-base sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-black transition-all shadow-xl hover:shadow-2xl hover:scale-[1.02] w-full sm:w-auto justify-center"
             >
               Start Creating
-              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                <ArrowRight size={18} />
+              <div className="w-7 sm:w-8 h-7 sm:h-8 rounded-lg bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
+                <ArrowRight size={16} sm:size={18} />
               </div>
             </button>
             <a
               href="https://github.com/yoanbernabeu/openbento"
               target="_blank"
               rel="noreferrer"
-              className="h-14 px-8 rounded-2xl bg-white border border-gray-200 text-gray-700 font-semibold text-lg flex items-center gap-3 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+              className="h-12 sm:h-14 px-6 sm:px-8 rounded-2xl bg-white border border-gray-200 text-gray-700 font-semibold text-base sm:text-lg flex items-center gap-2 sm:gap-3 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm w-full sm:w-auto justify-center"
             >
-              <Star size={20} className="text-amber-500" />
+              <Star size={18} sm:size={20} className="text-amber-500" />
               Star on GitHub
             </a>
           </motion.div>
@@ -310,7 +310,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
               <span className="text-sm font-semibold text-violet-600 uppercase tracking-wider">
                 Block Types
               </span>
-              <h2 className="text-4xl font-bold tracking-tight mt-3 mb-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mt-3 mb-4">
                 7 content blocks to mix and match
               </h2>
               <p className="text-gray-500 max-w-xl mx-auto">
@@ -359,7 +359,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
               <span className="text-sm font-semibold text-purple-600 uppercase tracking-wider">
                 Features
               </span>
-              <h2 className="text-4xl font-bold tracking-tight mt-3 mb-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mt-3 mb-4">
                 Everything you need, nothing you don't
               </h2>
               <p className="text-gray-500 max-w-xl mx-auto">
@@ -461,7 +461,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
               <span className="text-sm font-semibold text-indigo-600 uppercase tracking-wider">
                 Optional Analytics
               </span>
-              <h2 className="text-4xl font-bold tracking-tight mt-3 mb-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mt-3 mb-4">
                 Track visits with Supabase
               </h2>
               <p className="text-gray-600 leading-relaxed mb-6">
@@ -541,7 +541,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             <span className="text-sm font-semibold text-blue-600 uppercase tracking-wider">
               Social Integration
             </span>
-            <h2 className="text-3xl font-bold tracking-tight mt-3 mb-4">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mt-3 mb-4">
               26+ Social Platforms Supported
             </h2>
             <p className="text-gray-500 max-w-xl mx-auto mb-8">
@@ -603,7 +603,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             <span className="text-sm font-semibold text-purple-400 uppercase tracking-wider">
               How it works
             </span>
-            <h2 className="text-4xl font-bold tracking-tight mt-3">Ready in 4 steps</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mt-3">Ready in 4 steps</h2>
           </div>
 
           <div className="grid md:grid-cols-4 gap-8">
@@ -680,18 +680,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart }) => {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 tracking-tight">
               Ready to build your bento?
             </h2>
-            <p className="text-xl text-gray-500 mb-10">
+            <p className="text-base sm:text-lg md:text-xl text-gray-500 mb-8 sm:mb-10">
               No sign-up required. No payment. Just start creating and export when you're ready.
             </p>
             <button
               onClick={onStart}
-              className="group h-16 px-10 rounded-2xl bg-gray-900 text-white font-semibold text-xl hover:bg-black transition-all shadow-2xl hover:shadow-3xl hover:scale-[1.02] inline-flex items-center gap-3"
+              className="group h-12 sm:h-14 md:h-16 px-6 sm:px-8 md:px-10 rounded-2xl bg-gray-900 text-white font-semibold text-base sm:text-lg md:text-xl hover:bg-black transition-all shadow-2xl hover:shadow-3xl hover:scale-[1.02] inline-flex items-center gap-2 sm:gap-3"
             >
               Start Building Now
-              <ChevronRight size={24} className="group-hover:translate-x-1 transition-transform" />
+              <ChevronRight size={20} sm:size={22} md:size={24} className="group-hover:translate-x-1 transition-transform" />
             </button>
             <p className="mt-6 text-sm text-gray-400">Free forever · Open source · MIT License</p>
           </motion.div>
