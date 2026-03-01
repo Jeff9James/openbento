@@ -3,6 +3,7 @@ import PreviewPage from './components/PreviewPage';
 import AnalyticsPage from './components/AnalyticsPage';
 import LandingPage from './components/LandingPage';
 import DocsPage from './components/docs/DocsPage';
+import PublishedSitePage from './components/PublishedSitePage';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ENABLE_LANDING = import.meta.env.VITE_ENABLE_LANDING === 'true';
@@ -84,6 +85,12 @@ function App() {
 
   if (route.startsWith('/doc')) {
     return <DocsPage />;
+  }
+
+  // Handle published site routes (e.g., /published/john)
+  if (route.startsWith('/published/')) {
+    const subdomain = route.replace('/published/', '').replace(/\/$/, '');
+    return <PublishedSitePage subdomain={subdomain} />;
   }
 
   return <MainApp />;

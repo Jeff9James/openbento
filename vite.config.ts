@@ -738,6 +738,44 @@ const openbentoSupabaseDevPlugin = (): Plugin => {
   };
 };
 
+// Plugin for handling published subdomain sites in development
+// This enables testing wildcard subdomain routing locally
+const openbentoPublishedSitePlugin = (): Plugin => {
+  return {
+    name: 'openbento-published-site',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        try {
+          if (!req.url || !req.headers.host) return next();
+
+          const host = req.headers.host.toLowerCase();
+          
+          // Check if this is a subdomain request (not localhost, not the main app)
+          const isLocalhost = host.startsWith('localhost') || host.startsWith('127.0.0.1');
+          const isMainApp = host === 'localhost:3000' || host === '127.0.0.1:3000';
+          
+          // Only handle subdomain requests (e.g., john.localhost:3000)
+          if (isLocalhost && !isMainApp) {
+            // Extract subdomain from host
+            const subdomain = host.split('.')[0];
+            
+            // Skip common non-subdomain hosts
+            if (subdomain && subdomain !== 'localhost' && !subdomain.match(/^\d/)) {
+              // Redirect to the special preview route with subdomain info
+              req.url = `/published/${subdomain}${req.url === '/' ? '' : req.url}`;
+            }
+          }
+
+          return next();
+        } catch {
+          return next();
+        }
+      });
+    },
+  };
+};
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
@@ -757,6 +795,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       simpleSupabaseSetupPlugin(),
       openbentoSupabaseDevPlugin(),
+      openbentoPublishedSitePlugin(),
     ],
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
