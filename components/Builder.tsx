@@ -54,6 +54,7 @@ import {
   Code,
   MousePointer2,
   Cpu,
+  Rocket,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
@@ -68,6 +69,7 @@ import { ProGuard } from './ProGuard';
 import { ProAnalyticsDashboard } from './ProAnalyticsDashboard';
 import { EditableWebsiteMode } from './EditableWebsiteMode';
 import WebLLMModal from './WebLLMModal';
+import DeployModal from './DeployModal';
 import { uploadMedia, formatFileSize } from '../utils/mediaUpload';
 
 interface BuilderProps {
@@ -1687,12 +1689,12 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
 
               <button
                 type="button"
-                aria-label="Deploy project"
+                aria-label="Launch your site"
                 onClick={handleExport}
-                className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-black transition-colors text-xs font-semibold flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-gradient-to-r from-violet-600 to-purple-600 text-white px-4 py-2 rounded-lg shadow-lg shadow-violet-500/25 hover:from-violet-700 hover:to-purple-700 transition-all text-xs font-semibold flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-violet-500"
               >
-                <Download size={16} />
-                <span className="hidden sm:inline">Deploy</span>
+                <Rocket size={16} />
+                <span className="hidden sm:inline">Launch</span>
               </button>
               
               {/* Auth Button */}
@@ -2457,120 +2459,12 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
       />
 
       {/* 7. DEPLOY MODAL */}
-      <AnimatePresence>
-        {showDeployModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden ring-1 ring-gray-900/5"
-            >
-              <div className="p-6 pb-4 flex justify-between items-start">
-                <div>
-                  <div className="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center text-green-700 mb-3">
-                    <Share2 size={18} />
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900">Deploy</h2>
-                  <p className="text-gray-500 mt-1 text-sm">
-                    Download the package, then follow <code>DEPLOY.md</code> inside.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowDeployModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="px-6 space-y-4 pb-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 space-y-2">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                      Deployment target
-                    </label>
-                    <select
-                      value={deployTarget}
-                      onChange={(e) => {
-                        setDeployTarget(e.target.value as ExportDeploymentTarget);
-                        setHasDownloadedExport(false);
-                        setExportError(null);
-                      }}
-                      className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-semibold text-gray-800"
-                    >
-                      <option value="vercel">Vercel</option>
-                      <option value="netlify">Netlify</option>
-                      <option value="docker">Docker (nginx)</option>
-                      <option value="vps">VPS (nginx)</option>
-                      <option value="heroku">Heroku</option>
-                      <option value="github-pages">GitHub Pages</option>
-                    </select>
-                  </div>
-
-                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 flex gap-3 items-center">
-                    <div className="bg-white p-2 rounded-full shadow-sm border border-gray-100 text-gray-700">
-                      {isExporting ? (
-                        <RefreshCw size={20} className="animate-spin" />
-                      ) : hasDownloadedExport ? (
-                        <Check size={20} className="text-green-600" />
-                      ) : (
-                        <Download size={20} />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm leading-tight">
-                        {isExporting
-                          ? 'Packaging…'
-                          : hasDownloadedExport
-                            ? 'Package downloaded'
-                            : 'Download package'}
-                      </p>
-                      <p className="text-gray-500 text-xs break-all">
-                        <code>{`${profile.name.replace(/\s+/g, '-').toLowerCase()}-bento-${deployTarget}.zip`}</code>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {exportError && (
-                  <div className="bg-red-50 border border-red-100 rounded-xl p-3 text-sm text-red-700 font-semibold">
-                    {exportError}
-                  </div>
-                )}
-              </div>
-
-              <div className="p-6 pt-4 border-t border-gray-100">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={downloadExport}
-                    disabled={isExporting}
-                    className="w-full sm:flex-1 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-black transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {isExporting ? (
-                      <RefreshCw size={16} className="animate-spin" />
-                    ) : (
-                      <Download size={16} />
-                    )}
-                    {hasDownloadedExport ? 'Download again' : 'Download package'}
-                  </button>
-                  <button
-                    onClick={() => setShowDeployModal(false)}
-                    className="w-full sm:flex-1 py-3 bg-white text-gray-900 rounded-xl font-bold border border-gray-200 hover:bg-gray-50 transition-colors"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <DeployModal
+        isOpen={showDeployModal}
+        onClose={() => setShowDeployModal(false)}
+        siteData={siteData}
+        bento={activeBento}
+      />
 
       {/* 5. ANALYTICS MODAL */}
       <AnimatePresence>

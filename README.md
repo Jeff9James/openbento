@@ -27,9 +27,9 @@
 
 - 🖱️ **Visual Drag & Drop** - Intuitive 9×9 grid editor. Drag, resize, and position blocks freely with real-time preview
 - 🎭 **Full Customization** - Colors, gradients, custom backgrounds. Avatars with borders, shadows & multiple shapes
-- 📦 **Export to React** - Download a complete Vite + React + TypeScript + Tailwind project, ready to deploy
-- 🚀 **Multi-Platform Deploy** - Auto-generated configs for Vercel, Netlify, GitHub Pages, Docker, VPS & Heroku
-- 🔒 **Privacy First** - No tracking, no account, no server required. All data stays in your browser localStorage
+- 🚀 **One-Click Deployment** - Launch your site instantly with a custom subdomain. No code, no GitHub, no hosting setup required
+- 📦 **Export to React** - Download a complete Vite + React + TypeScript + Tailwind project for self-hosting
+- 🔒 **Privacy First** - No tracking, no account required. All data stays in your browser localStorage
 - 📁 **Multiple Bentos** - Save and manage multiple projects locally. Switch between them instantly
 
 ### 📊 Optional Analytics
@@ -56,6 +56,25 @@ To enable ZeroClick ads:
    ```
 
 **Note:** Google AdSense support has been removed in favor of ZeroClick.ai for better privacy and AI-native ad experiences.
+
+### 🚀 Auto-Deployment (One-Click Launch)
+
+Deploy your bento site instantly without downloading code or configuring hosting:
+
+1. Design your page in the visual editor
+2. Click the **"Launch"** button (purple rocket icon)
+3. Choose your subdomain (e.g., `myname.yourdomain.com`)
+4. Your site is live within seconds!
+
+**Perfect for non-technical users** - no GitHub, no server setup, no code to touch.
+
+To enable auto-deployment, configure your environment variables:
+```env
+VITE_DEPLOYMENT_BASE_DOMAIN=yourdomain.com
+VITE_DEPLOYMENT_API_ENDPOINT=/api/deploy
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for complete setup instructions including backend API implementation options (Vercel Platforms, Netlify, Cloudflare, or custom VPS).
 
 ### 🌐 26+ Social Platforms Supported
 
