@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Rocket, X, Check, RefreshCw, Link, ExternalLink, Unlink, Globe } from 'lucide-react';
-import { PublishedSite } from '../services/publicationService';
+import { PublishedSite, getPublishedUrl, getPublishDomain } from '../services/publicationService';
 
 interface PublishModalProps {
   isOpen: boolean;
@@ -30,10 +30,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
   onUnpublish,
   onChangeSubdomain,
 }) => {
-  const getPublishUrl = (subdomain: string) => {
-    const domain = 'arena.site';
-    return `https://${subdomain}.${domain}`;
-  };
+  const domain = getPublishDomain();
 
   return (
     <AnimatePresence>
@@ -108,7 +105,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
                         className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-black/5 focus:border-black focus:outline-none transition-all font-semibold text-gray-800"
                         placeholder="your-name"
                       />
-                      <span className="text-gray-400 text-sm">.arena.site</span>
+                      <span className="text-gray-400 text-sm">.{domain}</span>
                     </div>
                     <button
                       onClick={onChangeSubdomain}
@@ -157,7 +154,7 @@ const PublishModal: React.FC<PublishModalProps> = ({
                       <div>
                         <p className="font-semibold text-gray-900">Free Public URL</p>
                         <p className="text-gray-500 text-sm mt-1">
-                          Your site will be available at <code className="bg-gray-200 px-1 rounded">*.arena.site</code>
+                          Your site will be available at <code className="bg-gray-200 px-1 rounded">*.{domain}</code>
                         </p>
                       </div>
                     </div>

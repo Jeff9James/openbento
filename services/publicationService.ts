@@ -3,9 +3,13 @@
  * 
  * This service manages the "one-click deploy" functionality that allows
  * non-technical users to publish their bento page to a public URL like:
- *   username.arena.site
+ *   username.offlink-nine.vercel.app
  * 
  * No code download required - just click "Publish" and get a public link!
+ * 
+ * SETUP REQUIRED:
+ * 1. Configure wildcard DNS (*.yourdomain.com -> your server)
+ * 2. Set VITE_PUBLISH_DOMAIN=yourdomain.com in your environment
  */
 
 import { SavedBento, SiteData } from '../types';
@@ -13,9 +17,14 @@ import { SavedBento, SiteData } from '../types';
 const PUBLISHED_SITES_KEY = 'openbento_published_sites';
 const PUBLISHED_SITE_KEY = 'openbento_published_site';
 
-// Domain configuration - in production, this would come from env
-const PUBLISH_DOMAIN = import.meta.env.VITE_PUBLISH_DOMAIN || 'arena.site';
-const PUBLISH_PROTOCOL = import.meta.env.VITE_PUBLISH_PROTOCOL || 'https';
+// Domain configuration from environment variables
+// In production, set VITE_PUBLISH_DOMAIN=offlink-nine.vercel.app
+const PUBLISH_DOMAIN = (import.meta.env.VITE_PUBLISH_DOMAIN as string) || 'arena.site';
+const PUBLISH_PROTOCOL = (import.meta.env.VITE_PUBLISH_PROTOCOL as string) || 'https';
+
+// Get the full domain (e.g., offlink-nine.vercel.app)
+export const getPublishDomain = () => PUBLISH_DOMAIN;
+export const getPublishProtocol = () => PUBLISH_PROTOCOL;
 
 export interface PublishedSite {
   id: string;              // Original bento ID
