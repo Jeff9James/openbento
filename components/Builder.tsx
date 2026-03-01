@@ -54,6 +54,10 @@ import {
   Code,
   MousePointer2,
   Cpu,
+  Rocket,
+  ExternalLink,
+  Copy,
+  Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
@@ -69,6 +73,13 @@ import { ProAnalyticsDashboard } from './ProAnalyticsDashboard';
 import { EditableWebsiteMode } from './EditableWebsiteMode';
 import WebLLMModal from './WebLLMModal';
 import { uploadMedia, formatFileSize } from '../utils/mediaUpload';
+import { 
+  publishSite, 
+  unpublishSite, 
+  isPublishAvailable, 
+  generateSuggestedSubdomain, 
+  savePublishedSubdomain, 
+} from '../services/publishService';
 
 interface BuilderProps {
   onBack?: () => void;
@@ -445,6 +456,14 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const [hasDownloadedExport, setHasDownloadedExport] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+
+  // Publish to web state
+  const [publishSubdomain, setPublishSubdomain] = useState(() => generateSuggestedSubdomain(''));
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'download' | 'publish'>('download');
+  const canPublish = isPublishAvailable();
 
   const [analyticsDays, setAnalyticsDays] = useState<number>(30);
   const [analyticsAdminToken, setAnalyticsAdminToken] = useState<string>(() => {
@@ -854,6 +873,40 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
     setHasDownloadedExport(false);
     setExportError(null);
     setShowDeployModal(true);
+  };
+
+  // Publish site to web
+  const handlePublish = async () => {
+    if (!publishSubdomain.trim()) {
+      setPublishError('Please enter a subdomain');
+      return;
+    }
+
+    setIsPublishing(true);
+    setPublishError(null);
+    setPublishedUrl(null);
+
+    const siteData: SiteData = { profile, blocks, gridVersion };
+    const result = await publishSite(siteData, publishSubdomain);
+
+    setIsPublishing(false);
+
+    if (result.success && result.url) {
+      setPublishedUrl(result.url);
+      savePublishedSubdomain(publishSubdomain);
+    } else {
+      setPublishError(result.error || 'Failed to publish');
+    }
+  };
+
+  // Unpublish site
+  const handleUnpublish = async () => {
+    const result = await unpublishSite(publishSubdomain);
+    if (result.success) {
+      setPublishedUrl(null);
+    } else {
+      setPublishError(result.error || 'Failed to unpublish');
+    }
   };
 
   // Export current bento as JSON file
@@ -1691,7 +1744,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                 onClick={handleExport}
                 className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-black transition-colors text-xs font-semibold flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <Download size={16} />
+                <Rocket size={16} />
                 <span className="hidden sm:inline">Deploy</span>
               </button>
               
@@ -2555,7 +2608,7 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                     {isExporting ? (
                       <RefreshCw size={16} className="animate-spin" />
                     ) : (
-                      <Download size={16} />
+                      <Rocket size={16} />
                     )}
                     {hasDownloadedExport ? 'Download again' : 'Download package'}
                   </button>
