@@ -1,28 +1,42 @@
 /**
- * Publication Service - Handles publishing sites to public subdomains
+ * Publication Service - Multi-tenant SaaS for publishing sites to public subdomains
  * 
- * This service manages the "one-click deploy" functionality that allows
- * non-technical users to publish their bento page to a public URL like:
- *   username.offlink-nine.vercel.app
- * 
- * No code download required - just click "Publish" and get a public link!
+ * Uses Supabase for persistent storage to enable true multi-tenant functionality.
+ * Users get their own subdomain like: username.offlink-nine.vercel.app
  * 
  * SETUP REQUIRED:
- * 1. Configure wildcard DNS (*.yourdomain.com -> your server)
- * 2. Set VITE_PUBLISH_DOMAIN=yourdomain.com in your environment
+ * 1. Run the SQL migration below to create the published_sites table
+ * 2. Configure wildcard DNS (*.yourdomain.com -> your server)
+ * 3. Set VITE_PUBLISH_DOMAIN=yourdomain.com in Vercel environment variables
+ * 
+ * SQL Migration:
+ * ```
+ * create table published_sites (
+ *   id text primary key,
+ *   subdomain text unique not null,
+ *   name text not null,
+ *   data jsonb not null,
+ *   published_at bigint not null,
+ *   last_updated bigint not null,
+ *   created_at timestamptz default now()
+ * );
+ * create index idx_published_sites_subdomain on published_sites(subdomain);
+ * create index idx_published_sites_id on published_sites(id);
+ * ```
  */
 
 import { SavedBento, SiteData } from '../types';
-
-const PUBLISHED_SITES_KEY = 'openbento_published_sites';
-const PUBLISHED_SITE_KEY = 'openbento_published_site';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 // Domain configuration from environment variables
-// In production, set VITE_PUBLISH_DOMAIN=offlink-nine.vercel.app
+// In Vercel, set VITE_PUBLISH_DOMAIN=offlink-nine.vercel.app
 const PUBLISH_DOMAIN = (import.meta.env.VITE_PUBLISH_DOMAIN as string) || 'arena.site';
 const PUBLISH_PROTOCOL = (import.meta.env.VITE_PUBLISH_PROTOCOL as string) || 'https';
 
-// Get the full domain (e.g., offlink-nine.vercel.app)
+// Local cache for quick access (synced with Supabase)
+let localCache: PublishedSite[] = [];
+let cacheLoaded = false;
+
 export const getPublishDomain = () => PUBLISH_DOMAIN;
 export const getPublishProtocol = () => PUBLISH_PROTOCOL;
 
@@ -35,6 +49,59 @@ export interface PublishedSite {
   data: SiteData;          // The site data snapshot
 }
 
+// Supabase database row type
+interface PublishedSiteRow {
+  id: string;
+  subdomain: string;
+  name: string;
+  data: SiteData;
+  published_at: number;
+  last_updated: number;
+}
+
+// Convert DB row to PublishedSite
+const rowToPublishedSite = (row: PublishedSiteRow): PublishedSite => ({
+  id: row.id,
+  subdomain: row.subdomain,
+  name: row.name,
+  data: row.data,
+  publishedAt: row.published_at,
+  lastUpdated: row.last_updated,
+});
+
+// Load all sites from Supabase into local cache
+const loadSitesFromSupabase = async (): Promise<PublishedSite[]> => {
+  if (!isSupabaseConfigured()) {
+    console.warn('Supabase not configured, using empty cache');
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase!
+      .from('published_sites')
+      .select('*');
+    
+    if (error) {
+      console.error('Failed to load published sites:', error);
+      return [];
+    }
+    
+    return data ? data.map(rowToPublishedSite) : [];
+  } catch (e) {
+    console.error('Error loading published sites:', e);
+    return [];
+  }
+};
+
+// Ensure cache is loaded
+const ensureCacheLoaded = async (): Promise<PublishedSite[]> => {
+  if (!cacheLoaded) {
+    localCache = await loadSitesFromSupabase();
+    cacheLoaded = true;
+  }
+  return localCache;
+};
+
 // Generate a URL-safe subdomain from a name
 export const generateSubdomain = (name: string): string => {
   return name
@@ -46,17 +113,17 @@ export const generateSubdomain = (name: string): string => {
 };
 
 // Check if subdomain is available (not already taken)
-export const isSubdomainAvailable = (subdomain: string): boolean => {
-  const sites = getAllPublishedSites();
+export const isSubdomainAvailable = async (subdomain: string): Promise<boolean> => {
+  const sites = await ensureCacheLoaded();
   return !sites.some(s => s.subdomain === subdomain);
 };
 
 // Get an available subdomain (adds numbers if taken)
-export const getAvailableSubdomain = (baseName: string): string => {
+export const getAvailableSubdomain = async (baseName: string): Promise<string> => {
   let subdomain = generateSubdomain(baseName);
   let counter = 1;
   
-  while (!isSubdomainAvailable(subdomain)) {
+  while (!await isSubdomainAvailable(subdomain)) {
     subdomain = `${generateSubdomain(baseName)}${counter}`;
     counter++;
     if (counter > 100) {
@@ -69,49 +136,36 @@ export const getAvailableSubdomain = (baseName: string): string => {
   return subdomain;
 };
 
-// Get all published sites
-export const getAllPublishedSites = (): PublishedSite[] => {
-  try {
-    const stored = localStorage.getItem(PUBLISHED_SITES_KEY);
-    if (!stored) return [];
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
+// Get all published sites (from cache)
+export const getAllPublishedSites = async (): Promise<PublishedSite[]> => {
+  return ensureCacheLoaded();
 };
 
 // Get published site by subdomain
-export const getPublishedSiteBySubdomain = (subdomain: string): PublishedSite | null => {
-  const sites = getAllPublishedSites();
+export const getPublishedSiteBySubdomain = async (subdomain: string): Promise<PublishedSite | null> => {
+  const sites = await ensureCacheLoaded();
   return sites.find(s => s.subdomain === subdomain.toLowerCase()) || null;
 };
 
 // Get published site by bento ID
-export const getPublishedSiteById = (id: string): PublishedSite | null => {
-  const sites = getAllPublishedSites();
+export const getPublishedSiteById = async (id: string): Promise<PublishedSite | null> => {
+  const sites = await ensureCacheLoaded();
   return sites.find(s => s.id === id) || null;
 };
 
 // Check if a bento is published
-export const isBentoPublished = (bentoId: string): boolean => {
-  return getPublishedSiteById(bentoId) !== null;
+export const isBentoPublished = async (bentoId: string): Promise<boolean> => {
+  return (await getPublishedSiteById(bentoId)) !== null;
 };
 
 // Get current published site for a bento (if any)
-export const getCurrentPublishedSite = (bentoId: string): PublishedSite | null => {
-  try {
-    const stored = localStorage.getItem(PUBLISHED_SITE_KEY);
-    if (!stored) return null;
-    const site = JSON.parse(stored) as PublishedSite;
-    return site.id === bentoId ? site : null;
-  } catch {
-    return null;
-  }
+export const getCurrentPublishedSite = async (bentoId: string): Promise<PublishedSite | null> => {
+  return getPublishedSiteById(bentoId);
 };
 
 // Publish a bento - creates a public subdomain
-export const publishBento = (bento: SavedBento): PublishedSite => {
-  const sites = getAllPublishedSites();
+export const publishBento = async (bento: SavedBento): Promise<PublishedSite> => {
+  const sites = await ensureCacheLoaded();
   
   // Check if already published
   const existing = sites.find(s => s.id === bento.id);
@@ -123,15 +177,25 @@ export const publishBento = (bento: SavedBento): PublishedSite => {
       lastUpdated: Date.now(),
     };
     
-    const updatedSites = sites.map(s => s.id === bento.id ? updated : updated);
-    localStorage.setItem(PUBLISHED_SITES_KEY, JSON.stringify(updatedSites));
-    localStorage.setItem(PUBLISHED_SITE_KEY, JSON.stringify(updated));
+    // Update in Supabase
+    if (isSupabaseConfigured()) {
+      await supabase!
+        .from('published_sites')
+        .update({
+          data: updated.data,
+          last_updated: updated.lastUpdated,
+        })
+        .eq('id', bento.id);
+    }
+    
+    // Update local cache
+    localCache = localCache.map(s => s.id === bento.id ? updated : s);
     
     return updated;
   }
   
   // Create new published site
-  const subdomain = getAvailableSubdomain(bento.name);
+  const subdomain = await getAvailableSubdomain(bento.name);
   const published: PublishedSite = {
     id: bento.id,
     subdomain,
@@ -141,83 +205,110 @@ export const publishBento = (bento: SavedBento): PublishedSite => {
     data: bento.data,
   };
   
-  sites.push(published);
-  localStorage.setItem(PUBLISHED_SITES_KEY, JSON.stringify(sites));
-  localStorage.setItem(PUBLISHED_SITE_KEY, JSON.stringify(published));
+  // Save to Supabase
+  if (isSupabaseConfigured()) {
+    const { error } = await supabase!
+      .from('published_sites')
+      .insert({
+        id: published.id,
+        subdomain: published.subdomain,
+        name: published.name,
+        data: published.data,
+        published_at: published.publishedAt,
+        last_updated: published.lastUpdated,
+      });
+    
+    if (error) {
+      console.error('Failed to publish site:', error);
+      throw new Error('Failed to publish site: ' + error.message);
+    }
+  }
+  
+  // Add to local cache
+  localCache.push(published);
   
   return published;
 };
 
 // Update published site content (re-publish with latest changes)
-export const updatePublishedSite = (bento: SavedBento): PublishedSite | null => {
-  const site = getCurrentPublishedSite(bento.id);
+export const updatePublishedSite = async (bento: SavedBento): Promise<PublishedSite | null> => {
+  const site = await getPublishedSiteById(bento.id);
   if (!site) return null;
   
-  const sites = getAllPublishedSites();
   const updated: PublishedSite = {
     ...site,
     data: bento.data,
     lastUpdated: Date.now(),
   };
   
-  const updatedSites = sites.map(s => s.id === bento.id ? updated : updated);
-  localStorage.setItem(PUBLISHED_SITES_KEY, JSON.stringify(updatedSites));
-  localStorage.setItem(PUBLISHED_SITE_KEY, JSON.stringify(updated));
+  // Update in Supabase
+  if (isSupabaseConfigured()) {
+    await supabase!
+      .from('published_sites')
+      .update({
+        data: updated.data,
+        last_updated: updated.lastUpdated,
+      })
+      .eq('id', bento.id);
+  }
+  
+  // Update local cache
+  localCache = localCache.map(s => s.id === bento.id ? updated : s);
   
   return updated;
 };
 
 // Unpublish a bento (remove from public access)
-export const unpublishBento = (bentoId: string): void => {
-  const sites = getAllPublishedSites().filter(s => s.id !== bentoId);
-  localStorage.setItem(PUBLISHED_SITES_KEY, JSON.stringify(sites));
-  
-  // Clear current if it was this one
-  try {
-    const current = localStorage.getItem(PUBLISHED_SITE_KEY);
-    if (current) {
-      const parsed = JSON.parse(current) as PublishedSite;
-      if (parsed.id === bentoId) {
-        localStorage.removeItem(PUBLISHED_SITE_KEY);
-      }
-    }
-  } catch {
-    // ignore
+export const unpublishBento = async (bentoId: string): Promise<void> => {
+  // Remove from Supabase
+  if (isSupabaseConfigured()) {
+    await supabase!
+      .from('published_sites')
+      .delete()
+      .eq('id', bentoId);
   }
+  
+  // Remove from local cache
+  localCache = localCache.filter(s => s.id !== bentoId);
 };
 
 // Change subdomain for a published site
-export const changeSubdomain = (bentoId: string, newSubdomain: string): PublishedSite | null => {
-  const sites = getAllPublishedSites();
+export const changeSubdomain = async (bentoId: string, newSubdomain: string): Promise<PublishedSite | null> => {
+  const sites = await ensureCacheLoaded();
   const site = sites.find(s => s.id === bentoId);
   
   if (!site) return null;
   
+  const cleanSubdomain = newSubdomain.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+  
   // Check if new subdomain is available (unless it's the same site)
-  const conflict = sites.find(s => s.subdomain === newSubdomain.toLowerCase() && s.id !== bentoId);
+  const conflict = sites.find(s => s.subdomain === cleanSubdomain && s.id !== bentoId);
   if (conflict) return null;
   
   const updated: PublishedSite = {
     ...site,
-    subdomain: newSubdomain.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-'),
+    subdomain: cleanSubdomain,
     lastUpdated: Date.now(),
   };
   
-  const updatedSites = sites.map(s => s.id === bentoId ? updated : updated);
-  localStorage.setItem(PUBLISHED_SITES_KEY, JSON.stringify(updatedSites));
-  
-  // Update current if it's this one
-  try {
-    const current = localStorage.getItem(PUBLISHED_SITE_KEY);
-    if (current) {
-      const parsed = JSON.parse(current) as PublishedSite;
-      if (parsed.id === bentoId) {
-        localStorage.setItem(PUBLISHED_SITE_KEY, JSON.stringify(updated));
-      }
+  // Update in Supabase
+  if (isSupabaseConfigured()) {
+    const { error } = await supabase!
+      .from('published_sites')
+      .update({
+        subdomain: updated.subdomain,
+        last_updated: updated.lastUpdated,
+      })
+      .eq('id', bentoId);
+    
+    if (error) {
+      console.error('Failed to update subdomain:', error);
+      return null;
     }
-  } catch {
-    // ignore
   }
+  
+  // Update local cache
+  localCache = localCache.map(s => s.id === bentoId ? updated : s);
   
   return updated;
 };
@@ -232,3 +323,6 @@ export const getPublishConfig = () => ({
   domain: PUBLISH_DOMAIN,
   protocol: PUBLISH_PROTOCOL,
 });
+
+// Check if Supabase is configured
+export const isPublicationConfigured = () => isSupabaseConfigured();

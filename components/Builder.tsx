@@ -13,6 +13,7 @@ import AvatarStyleModal from './AvatarStyleModal';
 import AIGeneratorModal from './AIGeneratorModal';
 import TemplateGallery from './TemplateGallery';
 import { exportSite, type ExportDeploymentTarget } from '../services/export';
+import { publishBento, unpublishBento, getCurrentPublishedSite, getPublishedUrl, changeSubdomain, getPublishDomain, isPublicationConfigured, type PublishedSite } from '../services/publicationService';
 import {
   initializeApp,
   updateBentoData,
@@ -54,6 +55,7 @@ import {
   Code,
   MousePointer2,
   Cpu,
+  Rocket,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tooltip } from 'react-tooltip';
@@ -65,6 +67,7 @@ import AccountSettingsModal from './AccountSettingsModal';
 import { useProFeatures } from '../hooks/useProFeatures';
 import { AdBanner, AdContainer } from './AdBanner';
 import { ProGuard } from './ProGuard';
+import PublishModal from './PublishModal';
 import { ProAnalyticsDashboard } from './ProAnalyticsDashboard';
 import { EditableWebsiteMode } from './EditableWebsiteMode';
 import WebLLMModal from './WebLLMModal';
@@ -392,6 +395,13 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showDeployModal, setShowDeployModal] = useState(false);
+
+  // Publish / Launch state
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [publishedSite, setPublishedSite] = useState<PublishedSite | null>(null);
+  const [newSubdomain, setNewSubdomain] = useState('');
   const [showAnalyticsModal, setShowAnalyticsModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showAvatarCropModal, setShowAvatarCropModal] = useState(false);
@@ -851,9 +861,409 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
   }, [duplicateBlock, editingBlockId]);
 
   const handleExport = () => {
+
+  // Open publish modal and check if site is already published
+  const handleOpenPublish = async () => {
+    if (!activeBento) return;
+    const published = await getCurrentPublishedSite(activeBento.id);
+    setPublishedSite(published);
+    setNewSubdomain(published?.subdomain || '');
+    setPublishError(null);
+    setShowPublishModal(true);
+  };
+
+  // Publish the current bento to a public subdomain
+  const handlePublish = async () => {
+    if (!activeBento || !profile) return;
+    
+    setIsPublishing(true);
+    setPublishError(null);
+    
+    try {
+      const currentBento = {
+        ...activeBento,
+        data: { profile, blocks, gridVersion },
+      };
+      
+      const published = await publishBento(currentBento);
+      setPublishedSite(published);
+      setNewSubdomain(published.subdomain);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to publish');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Update published site with latest changes
+  const handleRepublish = async () => {
+    if (!activeBento || !profile) return;
+    
+    setIsPublishing(true);
+    setPublishError(null);
+    
+    try {
+      const currentBento = {
+        ...activeBento,
+        data: { profile, blocks, gridVersion },
+      };
+      
+      const updated = await publishBento(currentBento);
+      setPublishedSite(updated);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to republish');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Unpublish the site
+  const handleUnpublish = async () => {
+    if (!activeBento) return;
+    
+    try {
+      await unpublishBento(activeBento.id);
+      setPublishedSite(null);
+      setShowPublishModal(false);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to unpublish');
+    }
+  };
+
+  // Change subdomain
+  const handleChangeSubdomain = async () => {
+    if (!activeBento || !newSubdomain.trim()) return;
+    
+    const updated = await changeSubdomain(activeBento.id, newSubdomain.trim());
+    if (updated) {
+      setPublishedSite(updated);
+    } else {
+      setPublishError('Subdomain already taken or invalid');
+    }
+  };
     setHasDownloadedExport(false);
+
+  // Open publish modal and check if site is already published
+  const handleOpenPublish = async () => {
+    if (!activeBento) return;
+    const published = await getCurrentPublishedSite(activeBento.id);
+    setPublishedSite(published);
+    setNewSubdomain(published?.subdomain || '');
+    setPublishError(null);
+    setShowPublishModal(true);
+  };
+
+  // Publish the current bento to a public subdomain
+  const handlePublish = async () => {
+    if (!activeBento || !profile) return;
+    
+    setIsPublishing(true);
+    setPublishError(null);
+    
+    try {
+      const currentBento = {
+        ...activeBento,
+        data: { profile, blocks, gridVersion },
+      };
+      
+      const published = await publishBento(currentBento);
+      setPublishedSite(published);
+      setNewSubdomain(published.subdomain);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to publish');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Update published site with latest changes
+  const handleRepublish = async () => {
+    if (!activeBento || !profile) return;
+    
+    setIsPublishing(true);
+    setPublishError(null);
+    
+    try {
+      const currentBento = {
+        ...activeBento,
+        data: { profile, blocks, gridVersion },
+      };
+      
+      const updated = await publishBento(currentBento);
+      setPublishedSite(updated);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to republish');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Unpublish the site
+  const handleUnpublish = async () => {
+    if (!activeBento) return;
+    
+    try {
+      await unpublishBento(activeBento.id);
+      setPublishedSite(null);
+      setShowPublishModal(false);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to unpublish');
+    }
+  };
+
+  // Change subdomain
+  const handleChangeSubdomain = async () => {
+    if (!activeBento || !newSubdomain.trim()) return;
+    
+    const updated = await changeSubdomain(activeBento.id, newSubdomain.trim());
+    if (updated) {
+      setPublishedSite(updated);
+    } else {
+      setPublishError('Subdomain already taken or invalid');
+    }
+  };
     setExportError(null);
+
+  // Open publish modal and check if site is already published
+  const handleOpenPublish = async () => {
+    if (!activeBento) return;
+    const published = await getCurrentPublishedSite(activeBento.id);
+    setPublishedSite(published);
+    setNewSubdomain(published?.subdomain || '');
+    setPublishError(null);
+    setShowPublishModal(true);
+  };
+
+  // Publish the current bento to a public subdomain
+  const handlePublish = async () => {
+    if (!activeBento || !profile) return;
+    
+    setIsPublishing(true);
+    setPublishError(null);
+    
+    try {
+      const currentBento = {
+        ...activeBento,
+        data: { profile, blocks, gridVersion },
+      };
+      
+      const published = await publishBento(currentBento);
+      setPublishedSite(published);
+      setNewSubdomain(published.subdomain);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to publish');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Update published site with latest changes
+  const handleRepublish = async () => {
+    if (!activeBento || !profile) return;
+    
+    setIsPublishing(true);
+    setPublishError(null);
+    
+    try {
+      const currentBento = {
+        ...activeBento,
+        data: { profile, blocks, gridVersion },
+      };
+      
+      const updated = await publishBento(currentBento);
+      setPublishedSite(updated);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to republish');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Unpublish the site
+  const handleUnpublish = async () => {
+    if (!activeBento) return;
+    
+    try {
+      await unpublishBento(activeBento.id);
+      setPublishedSite(null);
+      setShowPublishModal(false);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to unpublish');
+    }
+  };
+
+  // Change subdomain
+  const handleChangeSubdomain = async () => {
+    if (!activeBento || !newSubdomain.trim()) return;
+    
+    const updated = await changeSubdomain(activeBento.id, newSubdomain.trim());
+    if (updated) {
+      setPublishedSite(updated);
+    } else {
+      setPublishError('Subdomain already taken or invalid');
+    }
+  };
     setShowDeployModal(true);
+
+  // Open publish modal and check if site is already published
+  const handleOpenPublish = async () => {
+    if (!activeBento) return;
+    const published = await getCurrentPublishedSite(activeBento.id);
+    setPublishedSite(published);
+    setNewSubdomain(published?.subdomain || '');
+    setPublishError(null);
+    setShowPublishModal(true);
+  };
+
+  // Publish the current bento to a public subdomain
+  const handlePublish = async () => {
+    if (!activeBento || !profile) return;
+    
+    setIsPublishing(true);
+    setPublishError(null);
+    
+    try {
+      const currentBento = {
+        ...activeBento,
+        data: { profile, blocks, gridVersion },
+      };
+      
+      const published = await publishBento(currentBento);
+      setPublishedSite(published);
+      setNewSubdomain(published.subdomain);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to publish');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Update published site with latest changes
+  const handleRepublish = async () => {
+    if (!activeBento || !profile) return;
+    
+    setIsPublishing(true);
+    setPublishError(null);
+    
+    try {
+      const currentBento = {
+        ...activeBento,
+        data: { profile, blocks, gridVersion },
+      };
+      
+      const updated = await publishBento(currentBento);
+      setPublishedSite(updated);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to republish');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Unpublish the site
+  const handleUnpublish = async () => {
+    if (!activeBento) return;
+    
+    try {
+      await unpublishBento(activeBento.id);
+      setPublishedSite(null);
+      setShowPublishModal(false);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to unpublish');
+    }
+  };
+
+  // Change subdomain
+  const handleChangeSubdomain = async () => {
+    if (!activeBento || !newSubdomain.trim()) return;
+    
+    const updated = await changeSubdomain(activeBento.id, newSubdomain.trim());
+    if (updated) {
+      setPublishedSite(updated);
+    } else {
+      setPublishError('Subdomain already taken or invalid');
+    }
+  };
+  };
+
+  // Open publish modal and check if site is already published
+  const handleOpenPublish = async () => {
+    if (!activeBento) return;
+    const published = await getCurrentPublishedSite(activeBento.id);
+    setPublishedSite(published);
+    setNewSubdomain(published?.subdomain || '');
+    setPublishError(null);
+    setShowPublishModal(true);
+  };
+
+  // Publish the current bento to a public subdomain
+  const handlePublish = async () => {
+    if (!activeBento || !profile) return;
+    
+    setIsPublishing(true);
+    setPublishError(null);
+    
+    try {
+      const currentBento = {
+        ...activeBento,
+        data: { profile, blocks, gridVersion },
+      };
+      
+      const published = await publishBento(currentBento);
+      setPublishedSite(published);
+      setNewSubdomain(published.subdomain);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to publish');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Update published site with latest changes
+  const handleRepublish = async () => {
+    if (!activeBento || !profile) return;
+    
+    setIsPublishing(true);
+    setPublishError(null);
+    
+    try {
+      const currentBento = {
+        ...activeBento,
+        data: { profile, blocks, gridVersion },
+      };
+      
+      const updated = await publishBento(currentBento);
+      setPublishedSite(updated);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to republish');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // Unpublish the site
+  const handleUnpublish = async () => {
+    if (!activeBento) return;
+    
+    try {
+      await unpublishBento(activeBento.id);
+      setPublishedSite(null);
+      setShowPublishModal(false);
+    } catch (e) {
+      setPublishError(e instanceof Error ? e.message : 'Failed to unpublish');
+    }
+  };
+
+  // Change subdomain
+  const handleChangeSubdomain = async () => {
+    if (!activeBento || !newSubdomain.trim()) return;
+    
+    const updated = await changeSubdomain(activeBento.id, newSubdomain.trim());
+    if (updated) {
+      setPublishedSite(updated);
+    } else {
+      setPublishError('Subdomain already taken or invalid');
+    }
   };
 
   // Export current bento as JSON file
@@ -1693,6 +2103,17 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
               >
                 <Download size={16} />
                 <span className="hidden sm:inline">Deploy</span>
+              </button>
+
+              {/* Publish / Launch Button */}
+              <button
+                type="button"
+                aria-label="Publish and launch your site"
+                onClick={handleOpenPublish}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg shadow-sm hover:from-green-600 hover:to-emerald-700 transition-all text-xs font-semibold flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <Rocket size={16} />
+                <span className="hidden sm:inline">Publish</span>
               </button>
               
               {/* Auth Button */}
@@ -2571,6 +2992,20 @@ const Builder: React.FC<BuilderProps> = ({ onBack }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <PublishModal
+        isOpen={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        publishedSite={publishedSite}
+        isPublishing={isPublishing}
+        publishError={publishError}
+        newSubdomain={newSubdomain}
+        onSubdomainChange={setNewSubdomain}
+        onPublish={handlePublish}
+        onRepublish={handleRepublish}
+        onUnpublish={handleUnpublish}
+        onChangeSubdomain={handleChangeSubdomain}
+      />
 
       {/* 5. ANALYTICS MODAL */}
       <AnimatePresence>
